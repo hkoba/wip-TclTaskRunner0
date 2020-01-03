@@ -12,9 +12,10 @@ namespace eval TclTaskRunner {
 
 source $::TclTaskRunner::libDir/utils.tcl
 source $::TclTaskRunner::libDir/iomacro.tcl
+source $::TclTaskRunner::libDir/typemacro.tcl
 
 snit::type TclTaskRunner {
-    component myRootTaskSet -public root
+    component myTaskSetRegistry -public registry
 
     variable myBuilder
 
@@ -23,18 +24,19 @@ snit::type TclTaskRunner {
     option -quiet
 
     constructor args {
-        install myRootTaskSet using TaskSetDefinition $self.main
+        install myTaskSetRegistry using TaskSetRegistry $self.registry
         $self configurelist $args
         install myBuilder using TaskSetBuilder $self.builder \
-            -toplevel $self -root $myRootTaskSet
+            -toplevel $self -registry $myTaskSetRegistry
     }
 
     method load {scriptFileName args} {
         $myBuilder taskset define file $scriptFileName \
-             {*}$args -parent $myRootTaskSet
+             {*}$args
     }
 
     method define script {
+        error NIMPL
         $myBuilder taskset define script $script \
             -parent $myRootTaskSet
     }
@@ -47,6 +49,7 @@ snit::type TclTaskRunner {
 
 source $TclTaskRunner::libDir/builder.tcl
 source $TclTaskRunner::libDir/context.tcl
+source $TclTaskRunner::libDir/registry.tcl
 
 snit::method TclTaskRunner usage args {
     return "Usage: [file tail $TclTaskRunner::scriptFn] ?main.tcltask?"

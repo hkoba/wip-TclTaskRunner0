@@ -12,28 +12,26 @@ namespace eval TclTaskRunner {
     if {![info exists libDir]} {
         source [file dirname [::fileutil::fullnormalize [info script]]]/utils.tcl
         source [file dirname [::fileutil::fullnormalize [info script]]]/iomacro.tcl
+        source [file dirname [::fileutil::fullnormalize [info script]]]/typemacro.tcl
     }
 }
 
 snit::type ::TclTaskRunner::TaskSetDefinition {
     option -parent
     option -name ""
+    option -file ""
+    option -default ""
     
-    option -tasks
-    onconfigure -tasks tasks {install myTasks using set tasks}
-    variable myTasks [dict create]
+    variable myExtern [dict create]
 
-    option -files
-    onconfigure -files files {install myFiles using set files}
+    variable myTasks [dict create]
     variable myFiles [dict create]
 
-    variable myKidsDict [dict create]
-    
     typemethod create-in {parent name args} {
         if {[$parent taskset exists $name]} {
             error "Conflicting taskset name '$name'"
         }
-        set ts [$type create $parent.$name {*}$args -parent $parent]
+        set ts [$type create $parent.$name {*}$args -name $name -parent $parent]
         $parent taskset add $ts
         set ts
     }
@@ -43,6 +41,17 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     }
     method {target depends file} name {
         dict-default [dict get $myFiles $name] depends []
+    }
+
+    method {extern add} {name dict} {
+        dict set myExtern $name $dict
+    }
+    method all-tasks {} {set myTasks}
+    method {task add} {name dict} {
+        dict set myTasks $name $dict
+    }
+    method {file add} {name dict} {
+        dict set myFiles $name $dict
     }
     method {file exists} name {
         dict exists $myFiles $name
@@ -69,20 +78,20 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
 
 snit::type ::TclTaskRunner::TaskSetBuilder {
     variable myInterp
-    variable myRootTaskSet ""
+    variable myRegistry ""
     
     option -toplevel ""
-    option -root
+    option -registry ""
     onconfigure -root root {
-        install myRootTaskSet using set root
+        install myRegistry using set root
     }
 
     ::TclTaskRunner::io_util
 
     constructor args {
         $self configurelist $args
-        if {$myRootTaskSet eq ""} {
-            install myRootTaskSet using TaskSetDefinition $self.root
+        if {$myRegistry eq ""} {
+            install myRegistry using TaskSetRegistry $self.registry
         }
         install myInterp using interp create $self.interp
     }
@@ -108,83 +117,124 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     }
 
     method {declare use} {varName name args} {
-        upvar 1 $varName dict
-        # XXX
+        upvar 1 $varName def
+        set subdef [$self taskset define file \
+                        [$self filename-from-extern $name $def] \
+                        -parent $def]
+        $def extern add $name $subdef
+    }
+
+    method filename-from-extern {name baseDef} {
+        if {![regsub ^@ $name {} rootName]} {
+            error "Used name must start with @"
+        }
+        set baseDir [file dirname [$baseDef cget -file]]
+        return $baseDir/$rootName.tcltask
     }
 
     method {target add} {varName targetName args} {
-        upvar 1 $varName dict
-        $self verify target $targetName {*}$args
-        set target [dict create public no {*}$args]
-        set kind [if {[dict exists $target check]} {
+        upvar 1 $varName def
+        lassign [$self precheck target $def $targetName {*}$args] \
+            kind dict
+        dict-set-default dict public no
+        $def $kind add $targetName $dict
+    }
+    
+    typevariable ourKnownKeys [::TclTaskRunner::enum_dict \
+                                   public check action \
+                                   dependsTasks dependsFiles]
+
+    method {precheck target} {def targetName args} {
+        set dict [dict create]
+        foreach {name value} $args {
+            if {![dict exists $ourKnownKeys $name]} {
+                error "Unknown item $name in target $targetName file [$def cget -file]"
+            }
+            if {[dict exists $dict $name]} {
+                error "Duplicate item $name in target $targetName file [$def cget -file]"
+            }
+            dict set dict $name $value
+        }
+        set kind [if {[dict exists $dict check]} {
             string cat task
         } else {
             string cat file
         }]
-        # XXX: dependsFiles, dependsTasks を変形して depends へ
-        dict set dict $kind $targetName $target
-        set targetName
+        
+        list $kind $dict
     }
-    
-    method {verify target} {name args} {}
 
     method add {kind varName targetName args} {
-        upvar 1 $varName dict
+        upvar 1 $varName def
         # XXX: conflict
-        dict set dict $kind $targetName [list $kind $targetName {*}$args]
+        $def $kind add $targetName [list $kind $targetName {*}$args]
     }
 
     method {annotate public} {varName kind targetName args} {
-        upvar 1 $varName dict
         if {$kind ne "target"} {error "Invalid kind: $kind"}
-        $self target add $varName $targetName {*}$args \
-            public yes
+        uplevel 1 [list $self target add $varName $targetName {*}$args \
+            public yes]
     }
 
     method {annotate default} {varName kind targetName args} {
-        upvar 1 $varName dict
         if {$kind ne "target"} {error "Invalid kind: $kind"}
-        $self target add $varName $targetName {*}$args
-        dict set dict default $targetName
+        uplevel 1 [list $self target add $varName $targetName {*}$args \
+            public yes]
+        upvar 1 $varName def
+        $def configure -default $targetName
     }
 
     #========================================
 
     method {taskset define file} {fn args} {
-        set parent [from args -parent $myRootTaskSet]
-        set name [from args -name [file rootname [file tail $fn]]]
+        set name [$myRegistry intern $fn]
 
-        set dict [$self taskset parse file $fn {*}$args]
+        puts "# def $name -file $fn"
+        set def [TaskSetDefinition create-in $parent $name -file $fn]
+        puts "# => name [$def cget -name]"
 
-        TaskSetDefinition create-in $parent $name \
-            -tasks [dict-default $dict task] \
-            -files [dict-default $dict file] 
+        $self taskset populate $def -file $fn
     }
 
-    method {taskset parse file} {fn args} {
-        set script [$self read_file $fn]
+    method {taskset populate} {def args} {
+        $self prepare-context def
         
-        $self taskset parse script $script
+        $myInterp eval [if {[set fn [from args -file ""]] ne ""} {
+            $self read_file $fn
+        } else {
+            from args -script ""
+        }]
+
+        $self taskset finalize $def
+
+        set def
     }
     
-    method {taskset parse script} script {
-        $self prepare-context dict
-        
-        $myInterp eval $script
-
-        # XXX: ここで dict の中身のエラー検査
-
-        set dict
+    method {taskset finalize} def {
+        set taskDict [$def all-tasks]
+        foreach task [dict values $taskDict] {
+            set deps []
+            if {[dict-cut task dependsTasks]} {
+                
+            }
+            if {[dict-cut task dependsFiles]} {
+                
+            }
+            dict set task depends $deps
+        }
     }
-    
+
+    method {verify dependsTasks} {def dependsList} {
+        foreach dep $dependsList {
+            if {[regexp ^@ $dep]} {
+                
+            }
+        }
+    }
+
     method {taskset compile} {name dict} {
+        # TODO
 
-        # puts $dict
-
-        # XXX: そもそも myInterp で eval するんじゃなかったんかい
-        # で、myInterp の特定の変数に溜まった内容を使って
-        # 実際のスクリプトを構築する、と。
-        
 	set def [__EXPAND $ourTypeTemplate \
 		     %TYPENAME% $typeName \
                      %NAME% $name \

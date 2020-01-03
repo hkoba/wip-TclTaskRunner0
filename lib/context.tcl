@@ -2,7 +2,7 @@
 # -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
 
 
-snit::type RunContext {
+snit::type ::TclTaskRunner::RunContext {
     variable myWorker
     variable myVisited
     variable myUpdated

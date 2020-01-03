@@ -13,6 +13,7 @@ namespace eval TclTaskRunner {
         source [file dirname [::fileutil::fullnormalize [info script]]]/utils.tcl
         source [file dirname [::fileutil::fullnormalize [info script]]]/iomacro.tcl
         source [file dirname [::fileutil::fullnormalize [info script]]]/typemacro.tcl
+        source [file dirname [::fileutil::fullnormalize [info script]]]/registry.tcl
     }
 }
 
@@ -24,55 +25,35 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     
     variable myExtern [dict create]
 
-    variable myTasks [dict create]
-    variable myFiles [dict create]
+    variable myDeps [dict create]
+    method varName varName {myvar $varName}
 
-    typemethod create-in {parent name args} {
-        if {[$parent taskset exists $name]} {
-            error "Conflicting taskset name '$name'"
-        }
-        set ts [$type create $parent.$name {*}$args -name $name -parent $parent]
-        $parent taskset add $ts
-        set ts
+    method {target spec} name {
+        set dict [dict get $myDeps $name]
+        list $self [dict get $dict kind] $name
     }
-
-    method {target depends task} name {
-        dict-default [dict get $myTasks $name] depends []
+    method {target exists} name {dict exists $myDeps $name}
+    method {target get} name {dict get $myDeps $name}
+    method {target kind} name {
+        dict get $myDeps $name kind
     }
-    method {target depends file} name {
-        dict-default [dict get $myFiles $name] depends []
+    method {target depends} name {
+        dict-default [dict get $myDeps $name] depends []
     }
 
     method {extern add} {name dict} {
         dict set myExtern $name $dict
     }
-    method all-tasks {} {set myTasks}
     method {task add} {name dict} {
-        dict set myTasks $name $dict
+        dict set myDeps $name [dict merge $dict [dict create kind task]]
     }
     method {file add} {name dict} {
-        dict set myFiles $name $dict
+        dict set myDeps $name [dict merge $dict [dict create kind file]]
     }
     method {file exists} name {
-        dict exists $myFiles $name
-    }
-
-    method {taskset exists} name {
-        dict exists $myKidsDict $name
-    }
-    method {taskset get} args {
-        if {$args eq ""} {
-            set myKidsDict
-        } else {
-            dict get $myKidsDict {*}$args
-        }
-    }
-    method {taskset add} ts {
-        set name [$ts cget -name]
-        if {[dict exists $myKidsDict $name]} {
-            error "Conflicting sub-taskset name '$name'"
-        }
-        dict set myKidsDict $name $ts
+        expr {[dict exists $myDeps $name]
+              && 
+              [dict get $myDeps $name kind] eq "file"}
     }
 }
 
@@ -82,7 +63,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     
     option -toplevel ""
     option -registry ""
-    onconfigure -root root {
+    onconfigure -registry root {
         install myRegistry using set root
     }
 
@@ -118,9 +99,9 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     method {declare use} {varName name args} {
         upvar 1 $varName def
-        set subdef [$self taskset define file \
+        set subdef [$self taskset ensure-loaded \
                         [$self filename-from-extern $name $def] \
-                        -parent $def]
+                        ]
         $def extern add $name $subdef
     }
 
@@ -186,11 +167,24 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     #========================================
 
+    method {taskset ensure-loaded} {fn} {
+        set name [$myRegistry relative-name $fn]
+        if {[$myRegistry exists $name]} {
+            $myRegistry get $name
+        } else {
+            $self taskset define file $fn
+        }
+    }
+
     method {taskset define file} {fn args} {
-        set name [$myRegistry intern $fn]
+        set name [$myRegistry relative-name $fn]
+        if {[$myRegistry exists $name]} {
+            error "Conflicting name?? $name"
+        }
 
         puts "# def $name -file $fn"
-        set def [TaskSetDefinition create-in $parent $name -file $fn]
+        $myRegistry add $name \
+            [set def [TaskSetDefinition $myRegistry.$name -name $name -file $fn {*}$args]]
         puts "# => name [$def cget -name]"
 
         $self taskset populate $def -file $fn
@@ -211,17 +205,32 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     }
     
     method {taskset finalize} def {
-        set taskDict [$def all-tasks]
-        foreach task [dict values $taskDict] {
+        upvar 0 [$def varName myDeps] taskDict
+        # if {[$def cget -default] eq ""} {
+        #     set firstTarget [lindex [dict keys $taskDict] 0]
+        #     puts "firstTarget $firstTarget"
+        #     $def configure -default $firstTarget
+        # }
+        dict for {name task} $taskDict {
             set deps []
             if {[dict-cut task dependsTasks]} {
-                
+                foreach depTask $dependsTasks {
+                    lappend deps [if {[regexp ^@ $depTask]} {
+                        $myRegistry resolve-spec $depTask [$def cget -name]
+                    } else {
+                        $def target spec $depTask
+                    }]
+                }
             }
             if {[dict-cut task dependsFiles]} {
-                
+                foreach depFile $dependsFiles {
+                    lappend deps [$def target spec $depFile]
+                }
             }
             dict set task depends $deps
+            dict set taskDict $name $task
         }
+        puts "def [$def cget -name]: $taskDict"
     }
 
     method {verify dependsTasks} {def dependsList} {

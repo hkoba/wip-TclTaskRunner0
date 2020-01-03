@@ -25,9 +25,17 @@ namespace eval ::TclTaskRunner {
         }
     }
 
-    proc dict-cut {dictVar name {default ""}} {
+    proc dict-cut {dictVar name {outVar ""}} {
         upvar 1 $dictVar dict
-        error nimpl
+        if {$outVar eq ""} {set outVar $name}
+        if {![dict exists $dict $name]} {
+            return no
+        }
+            
+        upvar 1 $outVar out
+        set out [dict get $dict $name]
+        dict unset dict $name
+        return 1
     }
 
     proc scope_guard {varName command} {

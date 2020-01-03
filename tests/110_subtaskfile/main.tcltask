@@ -4,7 +4,7 @@
 use @foo
 use @bar
 
-default target x1 dependsTasks {@foo @bar.b2 baz} action {
+default target x1 dependsTasks {@foo @bar#b2 baz} action {
     puts [list $::foo $::bar $::baz]
 }
 

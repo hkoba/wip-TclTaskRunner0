@@ -43,7 +43,7 @@ snit::type TclTaskRunner {
     
     method runner args {
         RunContext $self.runner.%AUTO% {*}$args \
-            -root $myRootTaskSet -toplevel $self
+            -registry $myTaskSetRegistry -toplevel $self
     }
 }
 
@@ -73,9 +73,17 @@ snit::typemethod TclTaskRunner toplevel args {
         exit 1
     }
 
-    $self load $taskFile
+    set def [$self load $taskFile]
     
-    [$self runner] run
+    if {[llength $args]} {
+        set args [lassign $args target]
+    } else {
+        set target [$def cget -default]
+        puts "default target = $target"
+    }
+    
+    # XXX: 複雑すぎるよね. 自由度を損ねずに、簡単化するには？
+    [$self runner] run [list $def [$def target kind $target] $target]
 }
 
 if {![info level] && [info script] eq $::argv0} {

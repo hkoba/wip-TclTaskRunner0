@@ -28,6 +28,9 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     variable myDeps [dict create]
     method varName varName {myvar $varName}
 
+    variable myMethods [dict create]
+    variable myProcs [dict create]
+
     method {target spec} name {
         set dict [dict get $myDeps $name]
         list $self [dict get $dict kind] $name
@@ -54,6 +57,21 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         expr {[dict exists $myDeps $name]
               && 
               [dict get $myDeps $name kind] eq "file"}
+    }
+
+    variable myMisc [dict create]
+    method {misc add} {kind name body} {
+        dict set myMisc $kind $name $body
+    }
+
+    method {script subst} {target script args} {
+        set deps [$self target depends $target]
+        string map [list \
+                        \$@ $target \
+                        \$< [string trim [lindex $deps 0]] \
+                        \$^ [lrange $deps 0 end] \
+                        {*}$args
+                       ] $script
     }
 }
 
@@ -148,7 +166,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     method add {kind varName targetName args} {
         upvar 1 $varName def
         # XXX: conflict
-        $def $kind add $targetName [list $kind $targetName {*}$args]
+        $def misc add $kind $targetName [list $kind $targetName {*}$args]
     }
 
     method {annotate public} {varName kind targetName args} {
@@ -188,6 +206,10 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         puts "# => name [$def cget -name]"
 
         $self taskset populate $def -file $fn
+        
+        # $self taskset compile $def
+        
+        set def
     }
 
     method {taskset populate} {def args} {
@@ -229,15 +251,6 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             }
             dict set task depends $deps
             dict set taskDict $name $task
-        }
-        puts "def [$def cget -name]: $taskDict"
-    }
-
-    method {verify dependsTasks} {def dependsList} {
-        foreach dep $dependsList {
-            if {[regexp ^@ $dep]} {
-                
-            }
         }
     }
 

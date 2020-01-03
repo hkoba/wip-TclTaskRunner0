@@ -10,7 +10,14 @@ snit::type ::TclTaskRunner::RunContext {
     
     variable myLogger
 
+    option -registry
+    option -toplevel
+
     proc + {x y} {expr {$x + $y}}
+
+    method run {targetTuple args} {
+        $self update $targetTuple 0 {*}$args
+    }
 
     # scopeList は引数にしたほうが良いのでは
     # targetTuple == [list $scope $kind $name]
@@ -21,7 +28,7 @@ snit::type ::TclTaskRunner::RunContext {
         
         lassign $targetTuple scope kind target
 
-        set depends [$scope target depends $kind $target]
+        set depends [$scope target depends $target]
         foreach pred $depends {
             if {[set v [default myVisited($pred) 0]] == 0} {
                 $self update $pred [+ $depth 1]
@@ -43,7 +50,7 @@ snit::type ::TclTaskRunner::RunContext {
         set myVisited($targetTuple) 2
         
         if {[llength $changed] || $depends eq ""} {
-            $self try action $targetTuple $depth
+            $self target try action $targetTuple $depth
         }
     }
     
@@ -58,7 +65,7 @@ snit::type ::TclTaskRunner::RunContext {
         if {$kind eq "file"} {
             if {[$self file exists $target]} {
                 $self file mtime $target
-            } elseif {[$scope target exists file $target]} {
+            } elseif {[$scope file exists $target]} {
                 return -Inf
             } else {
                 error "Unknown node or file: $target"
@@ -73,5 +80,17 @@ snit::type ::TclTaskRunner::RunContext {
         {*}$myWorker [list file $cmd {*}$args]
     }
     
-    
+    method {worker apply-to} {target script} {
+        {*}$myWorker [list apply [list {self target} $script $selfns] \
+                          $self $target]
+    }
+
+    method {target try} {kind targetTuple depth} {
+        lassign $targetTuple scope kind target
+        set script [dict-default [$scope target get $target] $kind]
+        if {$script ne ""} {
+            $self worker apply-to $target \
+                [$scope script subst $target $script]
+        }
+    }
 }

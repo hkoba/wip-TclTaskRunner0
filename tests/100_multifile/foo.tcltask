@@ -1,0 +1,28 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+default target taskA dependsTasks {taskB taskC} check {
+    info exists ::varA
+} action {
+    set ::varA [list $::varB $::varC]
+}
+
+target taskB check {
+    info exists ::varB
+} action {
+    set ::varB BBB
+}
+
+public target taskC check {
+    info exists ::varC
+} action {
+    set ::varC CCC
+}
+
+method xxx {a b} {
+    expr {$a + $b}
+}
+
+proc yyy {a b} {
+    expr {$a * $b}
+}

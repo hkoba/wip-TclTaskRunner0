@@ -145,6 +145,10 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     method {precheck target} {def targetName args} {
         set dict [dict create]
+        if {[llength $args] == 2} {
+            lassign $args files action
+            set args [list dependsFiles $files action $action]
+        }
         foreach {name value} $args {
             if {![dict exists $ourKnownKeys $name]} {
                 error "Unknown item $name in target $targetName file [$def cget -file]"

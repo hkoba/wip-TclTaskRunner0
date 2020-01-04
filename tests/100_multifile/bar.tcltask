@@ -1,0 +1,20 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+default target taskX dependsTasks {taskY taskZ} check {
+    info exists ::varX
+} action {
+    set ::varX [list $::varY $::varZ]
+}
+
+target taskY check {
+    info exists ::varY
+} action {
+    set ::varY YYY
+}
+
+target taskZ check {
+    info exists ::varZ
+} action {
+    set ::varZ ZZZ
+}

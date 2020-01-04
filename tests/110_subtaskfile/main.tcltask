@@ -1,0 +1,15 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+use @foo
+use @bar
+
+default target x1 dependsTasks {@foo @bar#b2 baz} action {
+    puts [list $::foo $::b2 $::baz]
+}
+
+target baz check {
+    info exists ::baz
+} action {
+    set ::baz BAZ
+}

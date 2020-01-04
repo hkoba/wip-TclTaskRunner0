@@ -1,0 +1,24 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+default target prog dependsFiles {main.o a.o b.o c.o} action {
+    cc $^ -o $@
+}
+
+target main.o dependsFiles {main.c a.h b.h c.h} action {
+    cc -c $< -o $@
+}
+
+target c.o dependsFiles {c.c c.h} action {
+    cc -c $< -o $@
+}
+
+target b.o {b.c b.h} {
+    cc -c $< -o $@
+}
+
+target a.o {a.c a.h} {
+    cc -c $< -o $@
+}
+
+proc cc args {exec gcc {*}$args}

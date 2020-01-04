@@ -1,0 +1,14 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+default target b1 check {
+    info exists ::b1
+} action {
+    set ::b1 BOO
+}
+
+public target b2 check {
+    info exists ::b2
+} action {
+    set ::b2 BAR
+}

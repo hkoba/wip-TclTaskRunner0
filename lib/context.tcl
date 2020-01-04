@@ -44,9 +44,19 @@ snit::type ::TclTaskRunner::RunContext {
         
         lassign $targetTuple scope kind target
 
+        if {![$scope target exists $target]} {
+            if {$depth == 0} {
+                error "Unknown file or target: $target"
+            }
+            return 0
+        }
+
         $self dputs $depth start updating @[$scope cget -name] $target
 
         set depends [$scope target depends $target]
+        $self dputs $depth scope $scope target $target deps $depends
+        $self dputs $depth [$scope varName myDeps] [set [$scope varName myDeps]]
+
         foreach pred $depends {
             $self dputs $depth testing $pred from $targetTuple
             if {[set v [default myVisited($pred) 0]] == 0} {
@@ -101,8 +111,14 @@ snit::type ::TclTaskRunner::RunContext {
         {*}$myWorker [list file $cmd {*}$args]
     }
     
-    method {worker apply-to} {scope target script} {
-        {*}$myWorker [list apply [list {self target} $script $selfns] \
+    method {worker apply-to} {scope target depth script} {
+        set targetNS [$scope runtime typename]
+        set vmap [$scope var-map $target]
+        if {$options(-debug) >= 2} {
+            $self dputs $depth scope $scope vmap $vmap
+        }
+        set subst [string map $vmap $script]
+        {*}$myWorker [list apply [list {self target} $subst $targetNS] \
                           [$scope runtime instance] $target]
     }
 
@@ -120,8 +136,7 @@ snit::type ::TclTaskRunner::RunContext {
         }
         $self dputs $depth running $scriptType script for $targetTuple = [string trim $script]
 
-        set resList [$self worker apply-to $scope $target \
-                         [$scope script subst $target $script]]
+        set resList [$self worker apply-to $scope $target $depth $script]
         
         $self dputs $depth ==> $resList
 
@@ -154,8 +169,7 @@ snit::type ::TclTaskRunner::RunContext {
         $self dputs $depth running $scriptType script for $targetTuple = [string trim $script]
         
         if {!$options(-dry-run)} {
-            set resList [$self worker apply-to $scope $target \
-                             [$scope script subst $target $script]]
+            set resList [$self worker apply-to $scope $target $depth $script]
             
             $self dputs $depth ==> $resList
 

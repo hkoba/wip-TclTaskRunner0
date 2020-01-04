@@ -83,8 +83,11 @@ snit::typemethod TclTaskRunner toplevel args {
         set target [$def cget -default]
     }
     
+    pushd_scope prevDir [file dirname $taskFile]
+
     # XXX: 複雑すぎるよね. 自由度を損ねずに、簡単化するには？
-    [$self runner -debug 1] run [list $def [$def target kind $target] $target]
+    [$self runner -debug [$self cget -debug]] \
+        run [list $def [$def target kind $target] $target]
 }
 
 if {![info level] && [info script] eq $::argv0} {

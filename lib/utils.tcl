@@ -47,6 +47,11 @@ namespace eval ::TclTaskRunner {
                        [list apply [list args $command]]]
     }
     
+    proc pushd_scope {varName newDir} {
+        uplevel 1 [list scope_guard $varName [list cd [pwd]]]
+        cd $newDir
+    }
+
     proc parsePosixOpts {varName {dict {}}} {
         upvar 1 $varName opts
 

@@ -29,11 +29,23 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     variable myDeps [dict create]
     method varName varName {myvar $varName}
 
+    # constructor args {
+    #     puts "Constructor for $self is called"
+    #     $self configurelist $args
+    #     trace add variable [myvar myDeps] write [list apply {{self args} {
+    #         puts "myDeps for $self is updated. $args"
+    #     }} $self]
+    #     trace add variable [myvar myDeps] unset [list apply {{self args} {
+    #         puts "myDeps for $self is UNSET $args"
+    #     }} $self]
+    # }
+
     variable myMethods [dict create]
     variable myProcs [dict create]
 
     method {runtime typename} {} { return ${selfns}::runtime }
     method {runtime instance} {} { return ${selfns}::instance }
+    method {runtime selfns} {} { return ${selfns} }
 
     method dump {} {
         list deps $myDeps methods $myMethods procs $myProcs extern $myExtern
@@ -75,14 +87,20 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         dict values [dict-default $myMisc $kind $default]
     }
 
-    method {script subst} {target script args} {
-        set deps [$self target depends $target]
-        string map [list \
-                        \$@ $target \
-                        \$< [string trim [lindex $deps 0]] \
-                        \$^ [lrange $deps 0 end] \
-                        {*}$args
-                       ] $script
+    method var-map target {
+        set depList []
+        foreach d [$self target depends $target] {
+            lassign $d scope kind dep
+            lappend depList [if {$kind eq "file"} {
+                set dep
+            } else {
+                set d
+            }]
+        }
+        list \
+            \$@ $target \
+            \$< [string trim [lindex $depList 0]] \
+            \$^ [lrange $depList 0 end]
     }
 }
 
@@ -244,9 +262,15 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             from args -script ""
         }]
 
-        $self dputs $depth @[$def cget -name] => [$def dump]
+        if {$options(-debug) >= 2} {
+            $self dputs $depth @[$def cget -name] => [$def dump]
+        }
 
         $self taskset finalize $def {*}$args
+
+        if {$options(-debug) >= 3} {
+            $self dputs $depth ==> [$def dump]
+        }
 
         set def
     }
@@ -273,6 +297,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                 foreach depFile $dependsFiles {
                     if {[$def target exists $depFile]} {
                         lappend deps [$def target spec $depFile]
+                    } else {
+                        lappend deps [list $def file $depFile]
                     }
                 }
             }
@@ -307,6 +333,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     typevariable ourTypeTemplate {
         snit::type %TYPENAME% {
 	    option -props
+            method selfns {} {return $selfns}
             %METHODS%
             %PROCS%
         }

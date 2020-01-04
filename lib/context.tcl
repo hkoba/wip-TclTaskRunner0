@@ -39,9 +39,6 @@ snit::type ::TclTaskRunner::RunContext {
     # targetTuple == [list $scope $kind $name]
 
     method update {targetTuple depth args} {
-        set changed []
-        set myVisited($targetTuple) 1
-        
         lassign $targetTuple scope kind target
 
         if {![$scope target exists $target]} {
@@ -53,9 +50,14 @@ snit::type ::TclTaskRunner::RunContext {
 
         $self dputs $depth start updating @[$scope cget -name] $target
 
+        set changed []
+        set myVisited($targetTuple) 1
+        
         set depends [$scope target depends $target]
         $self dputs $depth scope $scope target $target deps $depends
-        $self dputs $depth [$scope varName myDeps] [set [$scope varName myDeps]]
+        if {$options(-debug) >= 3} {
+            $self dputs $depth [$scope varName myDeps] [set [$scope varName myDeps]]
+        }
 
         foreach pred $depends {
             $self dputs $depth testing $pred from $targetTuple

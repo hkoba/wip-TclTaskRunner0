@@ -83,7 +83,7 @@ snit::typemethod TclTaskRunner toplevel args {
     }
     
     # XXX: 複雑すぎるよね. 自由度を損ねずに、簡単化するには？
-    [$self runner] run [list $def [$def target kind $target] $target]
+    [$self runner -debug 1] run [list $def [$def target kind $target] $target]
 }
 
 if {![info level] && [info script] eq $::argv0} {

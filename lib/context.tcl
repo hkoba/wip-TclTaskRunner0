@@ -3,15 +3,46 @@
 
 
 snit::type ::TclTaskRunner::RunContext {
-    variable myWorker
-    variable myVisited
-    variable myUpdated
-    variable myMtime
+    variable myWorker ""
+    variable myVisited -array []
+    variable myUpdated -array []
+    variable myMtime   -array []
     
-    variable myLogger
-
     option -registry
     option -toplevel
+
+    option -dry-run no
+
+    option -log-fh stdout
+    option -log-prefix "# "
+    option -debug 0
+    option -debug-fh stdout
+    option -indent "  "
+
+    option -worker
+    onconfigure -worker worker {
+        install myWorker using set worker
+    }
+
+    constructor args {
+        $self configurelist $args
+        $self worker init
+    }
+
+    method {worker init} {} {
+        if {$myWorker eq ""} {
+            install myWorker using list interp eval {}
+        }
+    }
+
+    method dputs {depth args} {$self dputsLevel 1 $depth {*}$args}
+    method dputsLevel {level depth args} {
+        if {$options(-debug) < $level} return
+        set indent [string repeat $options(-indent) $depth]
+        foreach line [split $args \n] {
+            puts $options(-debug-fh) "$indent#| $line"
+        }
+    }
 
     proc + {x y} {expr {$x + $y}}
 
@@ -27,6 +58,8 @@ snit::type ::TclTaskRunner::RunContext {
         set myVisited($targetTuple) 1
         
         lassign $targetTuple scope kind target
+
+        $self dputs $depth start updating @[$scope cget -name] $target
 
         set depends [$scope target depends $target]
         foreach pred $depends {

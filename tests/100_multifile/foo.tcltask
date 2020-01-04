@@ -5,6 +5,7 @@ default target taskA dependsTasks {taskB taskC} check {
     info exists ::varA
 } action {
     set ::varA [list $::varB $::varC]
+    puts varA=$::varA
 }
 
 target taskB check {

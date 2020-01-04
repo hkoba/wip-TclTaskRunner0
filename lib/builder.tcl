@@ -22,6 +22,7 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     option -name ""
     option -file ""
     option -default ""
+    option -depth 0
     
     variable myExtern [dict create]
 
@@ -30,6 +31,10 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
 
     variable myMethods [dict create]
     variable myProcs [dict create]
+
+    method dump {} {
+        list deps $myDeps methods $myMethods procs $myProcs extern $myExtern
+    }
 
     method {target spec} name {
         set dict [dict get $myDeps $name]
@@ -86,6 +91,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     }
 
     ::TclTaskRunner::io_util
+    ::TclTaskRunner::use_logging
 
     constructor args {
         $self configurelist $args
@@ -119,7 +125,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         upvar 1 $varName def
         set subdef [$self taskset ensure-loaded \
                         [$self filename-from-extern $name $def] \
-                        ]
+                        [+ 1 [$def cget -depth]]]
         $def extern add $name $subdef
     }
 
@@ -189,27 +195,32 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     #========================================
 
-    method {taskset ensure-loaded} {fn} {
+    method {taskset ensure-loaded} {fn depth} {
         set name [$myRegistry relative-name $fn]
         if {[$myRegistry exists $name]} {
             $myRegistry get $name
         } else {
-            $self taskset define file $fn
+            $self taskset define file $fn -depth $depth
         }
     }
 
     method {taskset define file} {fn args} {
+        set depth [from args -depth 0]
+
         set name [$myRegistry relative-name $fn]
         if {[$myRegistry exists $name]} {
             error "Conflicting name?? $name"
         }
 
-        puts "# def $name -file $fn"
-        $myRegistry add $name \
-            [set def [TaskSetDefinition $myRegistry.$name -name $name -file $fn {*}$args]]
-        puts "# => name [$def cget -name]"
+        $self dputs $depth define @$name -file $fn
 
-        $self taskset populate $def -file $fn
+        $myRegistry add $name \
+            [set def [TaskSetDefinition $myRegistry.$name \
+                          -name $name -file $fn \
+                          -depth $depth \
+                          {*}$args]]
+
+        $self taskset populate $def -file $fn -depth $depth
         
         # $self taskset compile $def
         
@@ -217,6 +228,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     }
 
     method {taskset populate} {def args} {
+        set depth [from args -depth 0]
+
         $self prepare-context def
         
         $myInterp eval [if {[set fn [from args -file ""]] ne ""} {
@@ -225,7 +238,9 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             from args -script ""
         }]
 
-        $self taskset finalize $def
+        $self dputs $depth @[$def cget -name] => [$def dump]
+
+        $self taskset finalize $def {*}$args
 
         set def
     }
@@ -250,7 +265,9 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             }
             if {[dict-cut task dependsFiles]} {
                 foreach depFile $dependsFiles {
-                    lappend deps [$def target spec $depFile]
+                    if {[$def target exists $depFile]} {
+                        lappend deps [$def target spec $depFile]
+                    }
                 }
             }
             dict set task depends $deps

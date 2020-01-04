@@ -12,12 +12,8 @@ snit::type ::TclTaskRunner::RunContext {
     option -toplevel
 
     option -dry-run no
-
-    option -log-fh stdout
-    option -log-prefix "# "
-    option -debug 0
-    option -debug-fh stdout
-    option -indent "  "
+    
+    ::TclTaskRunner::use_logging
 
     option -worker
     onconfigure -worker worker {
@@ -34,17 +30,6 @@ snit::type ::TclTaskRunner::RunContext {
             install myWorker using list interp eval {}
         }
     }
-
-    method dputs {depth args} {$self dputsLevel 1 $depth {*}$args}
-    method dputsLevel {level depth args} {
-        if {$options(-debug) < $level} return
-        set indent [string repeat $options(-indent) $depth]
-        foreach line [split $args \n] {
-            puts $options(-debug-fh) "$indent#| $line"
-        }
-    }
-
-    proc + {x y} {expr {$x + $y}}
 
     method run {targetTuple args} {
         $self update $targetTuple 0 {*}$args

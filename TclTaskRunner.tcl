@@ -13,6 +13,7 @@ namespace eval TclTaskRunner {
 source $::TclTaskRunner::libDir/utils.tcl
 source $::TclTaskRunner::libDir/iomacro.tcl
 source $::TclTaskRunner::libDir/typemacro.tcl
+source $::TclTaskRunner::libDir/logmacro.tcl
 
 snit::type TclTaskRunner {
     component myTaskSetRegistry -public registry
@@ -27,7 +28,8 @@ snit::type TclTaskRunner {
         install myTaskSetRegistry using TaskSetRegistry $self.registry
         $self configurelist $args
         install myBuilder using TaskSetBuilder $self.builder \
-            -toplevel $self -registry $myTaskSetRegistry
+            -toplevel $self -registry $myTaskSetRegistry \
+            -debug $options(-debug)
     }
 
     method load {scriptFileName args} {

@@ -1,6 +1,9 @@
 # -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
 
 namespace eval ::TclTaskRunner {
+
+    proc + {x y} {expr {$x + $y}}
+
     proc default {varName {default ""}} {
         upvar 1 $varName var
         if {[info exists var]} {

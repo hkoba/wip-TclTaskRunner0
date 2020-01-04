@@ -32,6 +32,9 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     variable myMethods [dict create]
     variable myProcs [dict create]
 
+    method {runtime typename} {} { return ${selfns}::runtime }
+    method {runtime instance} {} { return ${selfns}::instance }
+
     method dump {} {
         list deps $myDeps methods $myMethods procs $myProcs extern $myExtern
     }
@@ -64,9 +67,12 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
               [dict get $myDeps $name kind] eq "file"}
     }
 
-    variable myMisc [dict create]
+    variable myMisc [dict create method [] proc []]
     method {misc add} {kind name body} {
         dict set myMisc $kind $name $body
+    }
+    method {misc get} {kind {default ""}} {
+        dict values [dict-default $myMisc $kind $default]
     }
 
     method {script subst} {target script args} {
@@ -222,7 +228,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
         $self taskset populate $def -file $fn -depth $depth
         
-        # $self taskset compile $def
+        $self taskset compile $def -depth $depth
         
         set def
     }
@@ -275,36 +281,23 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         }
     }
 
-    method {taskset compile} {name dict} {
-        # TODO
+    method {taskset compile} {def args} {
+        set depth [from args -depth 0]
 
-	set def [__EXPAND $ourTypeTemplate \
-		     %TYPENAME% $typeName \
-                     %NAME% $name \
-                     %PARENT% $parent \
-                     %TASKS% [dict-default $dict task] \
-                     %FILES% [dict-default $dict file] \
-                     %METHODS% [join [dict values [dict-default $dict method]] \n] \
-                     %PROCS% [join [dict values [dict-default $dict proc]] \n] \
+	set script [__EXPAND $ourTypeTemplate \
+		     %TYPENAME% [$def runtime typename] \
+                     %METHODS% [join [$def misc get method] \n] \
+                     %PROCS% [join [$def misc get proc] \n] \
                     ]
         
-        # puts $def
-        # return
-
-        # %NAME%, %DEPS%, %PARENT%
-        # option でも良かったのでは…←でも、変えたくなるから…
-
-        uplevel #0 $def
-        # expand 結果だけを見せたい時も有るはず
-
-        # 親子関係を type に持たせるか、instance に持たせるか
-        # → parent は typevariable, kids は instance variable でどうか。
-        if {$parent ne ""} {
-            $parent taskset add $typeName
+        if {$options(-debug) >= 2} {
+            $self dputs $depth runtime type: $script
         }
 
+        uplevel #0 $script
+
         # type を即座に instantiate
-        $typeName $self.inst$myTaskSetCnt
+        [$def runtime typename] create [$def runtime instance]
     }
     
     proc __EXPAND {template args} {
@@ -314,45 +307,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     typevariable ourTypeTemplate {
         snit::type %TYPENAME% {
 	    option -props
-
             %METHODS%
-
             %PROCS%
-
-            typevariable ourName [list %NAME%]
-            method name {} {set ourName}
-
-            typevariable ourParent [list %PARENT%]
-            method parent {} {set ourParent}
-            
-            typevariable ourTasks [list %TASKS%]
-            typevariable ourFiles [list %FILES%]
-            method {target depends task} name {
-                dict-default [dict get $ourTasks $name] depends []
-            }
-            method {target depends file} name {
-                dict-default [dict get $ourFiles $name] depends []
-            }
-
-            method {file exists} name {
-                dict exists $ourFiles $name
-            }
-
-            variable myKidsDict [dict create]
-            method {taskset get} args {
-                if {$args eq ""} {
-                    set myKidsDict
-                } else {
-                    dict get $myKidsDict {*}$args
-                }
-            }
-            method {taskset add} ts {
-                set name [$ts name]
-                if {[dict exists $myKidsDict $name]} {
-                    error "Conflicting sub-taskset name $name"
-                }
-                dict set myKidsDict $name $ts
-            }
         }
     }
 }

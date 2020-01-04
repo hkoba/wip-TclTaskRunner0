@@ -101,9 +101,9 @@ snit::type ::TclTaskRunner::RunContext {
         {*}$myWorker [list file $cmd {*}$args]
     }
     
-    method {worker apply-to} {target script} {
+    method {worker apply-to} {scope target script} {
         {*}$myWorker [list apply [list {self target} $script $selfns] \
-                          $self $target]
+                          [$scope runtime instance] $target]
     }
 
     proc is-ok-or {resList default} {
@@ -120,7 +120,7 @@ snit::type ::TclTaskRunner::RunContext {
         }
         $self dputs $depth running $scriptType script for $targetTuple = [string trim $script]
 
-        set resList [$self worker apply-to $target \
+        set resList [$self worker apply-to $scope $target \
                          [$scope script subst $target $script]]
         
         $self dputs $depth ==> $resList
@@ -154,7 +154,7 @@ snit::type ::TclTaskRunner::RunContext {
         $self dputs $depth running $scriptType script for $targetTuple = [string trim $script]
         
         if {!$options(-dry-run)} {
-            set resList [$self worker apply-to $target \
+            set resList [$self worker apply-to $scope $target \
                              [$scope script subst $target $script]]
             
             $self dputs $depth ==> $resList

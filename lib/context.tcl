@@ -1,12 +1,12 @@
 #!/usr/bin/env tclsh
 # -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
 
-
 snit::type ::TclTaskRunner::RunContext {
     variable myWorker ""
     variable myVisited -array []
     variable myUpdated -array []
     variable myMtime   -array []
+    variable myState   -array []
     
     option -registry
     option -toplevel
@@ -63,6 +63,7 @@ snit::type ::TclTaskRunner::RunContext {
 
         set depends [$scope target depends $target]
         foreach pred $depends {
+            $self dputs $depth testing $pred from $targetTuple
             if {[set v [default myVisited($pred) 0]] == 0} {
                 $self update $pred [+ $depth 1]
             } elseif {$v == 1} {
@@ -73,10 +74,10 @@ snit::type ::TclTaskRunner::RunContext {
             if {$thisMtime < $predMtime} {
                 lappend changed $pred
             } elseif {$predMtime == -Inf && $thisMtime != -Inf} {
-                # $self dputs $depth Not changed but infinitely old: $pred
+                $self dputs $depth pred is not changed but infinitely old: $pred
                 lappend changed $pred
             } else {
-                # $self dputs $depth Not changed $pred mtime $predMtime $targetTuple $thisMtime
+                $self dputs $depth Not changed $pred mtime $predMtime $targetTuple $thisMtime
             }
         }
         
@@ -84,6 +85,8 @@ snit::type ::TclTaskRunner::RunContext {
         
         if {[llength $changed] || $depends eq ""} {
             $self target try action $targetTuple $depth
+        } else {
+            $self dputs $depth No need to update $target
         }
     }
     
@@ -118,12 +121,66 @@ snit::type ::TclTaskRunner::RunContext {
                           $self $target]
     }
 
-    method {target try} {kind targetTuple depth} {
-        lassign $targetTuple scope kind target
-        set script [dict-default [$scope target get $target] $kind]
-        if {$script ne ""} {
-            $self worker apply-to $target \
-                [$scope script subst $target $script]
+    proc is-ok-or {resList default} {
+        expr {[llength $resList] ? [lindex $resList 0] : $default}
+    }
+
+    method {target try check} {targetTuple depth} {
+        lassign $targetTuple scope - target
+        set scriptType check
+        set script [dict-default [$scope target get $target] $scriptType]
+        if {$script eq ""} {
+            $self dputs $depth No $scriptType script for $targetTuple
+            return
         }
+        $self dputs $depth running $scriptType script for $targetTuple = [string trim $script]
+
+        set resList [$self worker apply-to $target \
+                         [$scope script subst $target $script]]
+        
+        $self dputs $depth ==> $resList
+
+        set myState($targetTuple,$scriptType) $resList
+        
+        if {$resList ne ""} {
+            set rest [lassign $resList ok]
+            if {$ok} {
+                set myMtime($targetTuple) \
+                    [set mtime [expr {[clock microseconds]/1000000.0}]]
+
+                $self dputs $depth target mtime is updated: $targetTuple mtime $mtime
+            }
+        }
+        
+        set resList
+    }
+    
+    method {target try action} {targetTuple depth} {
+        lassign $targetTuple scope - target
+
+        if {[is-ok-or [$self target try check $targetTuple $depth] no]} return
+
+        set scriptType action
+        set script [dict-default [$scope target get $target] $scriptType]
+        if {$script eq ""} {
+            $self dputs $depth No $scriptType script for $targetTuple
+            return
+        }
+        $self dputs $depth running $scriptType script for $targetTuple = [string trim $script]
+        
+        if {!$options(-dry-run)} {
+            set resList [$self worker apply-to $target \
+                             [$scope script subst $target $script]]
+            
+            $self dputs $depth ==> $resList
+
+            set myState($targetTuple,$scriptType) $resList
+            
+            if {![is-ok-or [$self target try check $targetTuple $depth] yes]} {
+                error "postcheck failed after action $targetTuple"
+            }
+        }
+        
+        lappend myUpdated($targetTuple)
     }
 }

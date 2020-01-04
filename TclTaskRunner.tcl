@@ -79,7 +79,6 @@ snit::typemethod TclTaskRunner toplevel args {
         set args [lassign $args target]
     } else {
         set target [$def cget -default]
-        puts "default target = $target"
     }
     
     # XXX: 複雑すぎるよね. 自由度を損ねずに、簡単化するには？

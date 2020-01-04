@@ -10,7 +10,7 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
     variable myDict [dict create]
 
     method resolve-spec {refSpec {from ""}} {
-        puts "resolve-spec $refSpec from $from"
+        # puts "resolve-spec $refSpec from $from"
         if {![regexp {^@([^\#]+)(?:\#(.*))?} $refSpec -> file target]} {
             error "Invalid refSpec: $refSpec"
         }

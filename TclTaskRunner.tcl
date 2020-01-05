@@ -20,7 +20,7 @@ snit::type TclTaskRunner {
 
     variable myBuilder
 
-    # XXX: dry-run
+    option -dry-run no
     option -debug
     option -quiet
 
@@ -51,6 +51,8 @@ snit::type TclTaskRunner {
 
     method runner args {
         RunContext $self.runner.%AUTO% {*}$args \
+            -quiet $options(-quiet) \
+            -dry-run $options(-dry-run) \
             -registry $myTaskSetRegistry -toplevel $self
     }
 }

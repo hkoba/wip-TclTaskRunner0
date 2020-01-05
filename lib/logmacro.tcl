@@ -3,7 +3,8 @@
 
 package require snit
 
-snit::macro ::TclTaskRunner::use_logging {} {
+snit::macro ::TclTaskRunner::use_logging {{quiet no}} {
+    option -quiet $quiet
     option -log-fh stdout
     option -log-prefix "# "
     option -debug 0

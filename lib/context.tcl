@@ -67,7 +67,7 @@ snit::type ::TclTaskRunner::RunContext {
             return 0
         }
 
-        $self dputs $depth start updating @[$scope cget -name] $target
+        $self dputs $depth start updating [$scope cget -name] $target
 
         if {[set fileName [$scope cget -file]] ne ""} {
             pushd_scope prevDir [file dirname $fileName]
@@ -136,15 +136,20 @@ snit::type ::TclTaskRunner::RunContext {
         {*}$myWorker [list file $cmd {*}$args]
     }
     
-    method {worker apply-to} {scope target depth script} {
+    method {worker subst-apply-to} {scope target depth script} {
+        $self worker apply-to $scope $target $depth \
+            [$self target subst script $scope $target $script]
+    }
+
+    method {worker apply-to} {scope target depth subst} {
         set targetNS [$scope runtime typename]
-        set vmap [$scope var-map $target]
-        if {$options(-debug) >= 2} {
-            $self dputs $depth scope $scope vmap $vmap
-        }
-        set subst [string map $vmap $script]
         {*}$myWorker [list apply [list {self target} $subst $targetNS] \
                           [$scope runtime instance] $target]
+    }
+
+    method {target subst script} {scope target script} {
+        set vmap [$scope var-map $target]
+        string map $vmap $script
     }
 
     proc is-ok-or {resList default} {
@@ -161,7 +166,7 @@ snit::type ::TclTaskRunner::RunContext {
         }
         $self dputs $depth running $scriptType script for $targetTuple = [string trim $script]
 
-        set resList [$self worker apply-to $scope $target $depth $script]
+        set resList [$self worker subst-apply-to $scope $target $depth $script]
         
         $self dputs $depth ==> $resList
 
@@ -191,10 +196,17 @@ snit::type ::TclTaskRunner::RunContext {
             $self dputs $depth No $scriptType script for $targetTuple
             return
         }
-        $self dputs $depth running $scriptType script for $targetTuple = [string trim $script]
         
+        set subst [$self target subst script $scope $target $script]
+
+        if {$options(-quiet)} {
+            $self dputs $depth running $scriptType script for $targetTuple = [string trim $subst]
+        } else {
+            puts $options(-log-fh) "$options(-log-prefix)[string trim $subst]"
+        }
+
         if {!$options(-dry-run)} {
-            set resList [$self worker apply-to $scope $target $depth $script]
+            set resList [$self worker apply-to $scope $target $depth $subst]
             
             $self dputs $depth ==> $resList
 

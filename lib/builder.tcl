@@ -151,15 +151,17 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     method {declare use} {varName name args} {
         upvar 1 $varName def
+        set asName [from args as ""]
         set subdef [$self taskset ensure-loaded \
                         [$self filename-from-extern $name $def] \
                         [+ 1 [$def cget -depth]]]
-        $def extern add $name $subdef
+        $def extern add $name $subdef $asName
     }
 
     method filename-from-extern {name baseDef} {
-        if {![regsub ^@ $name {} rootName]} {
-            error "Used name must start with @"
+        set pattern {^@|\.tcltask$}
+        if {![regsub $pattern $name {} rootName]} {
+            error "Bad argument for \[use\] statement. '$name' should match with $pattern"
         }
         set baseDir [file dirname [$baseDef cget -file]]
         return $baseDir/$rootName.tcltask
@@ -275,7 +277,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         }]
 
         if {$options(-debug) >= 2} {
-            $self dputs $depth @[$def cget -name] => [$def dump]
+            $self dputs $depth [$def cget -name] => [$def dump]
         }
 
         $self taskset finalize $def {*}$args

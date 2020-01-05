@@ -12,13 +12,12 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
     method all {} {set myDict}
 
     method get relName {
-        regsub ^@ $relName {} relName
         dict get $myDict $relName
     }
 
     method resolve-spec {refSpec {from ""}} {
         # puts "resolve-spec $refSpec from $from"
-        if {![regexp {^@([^\#]+)(?:\#(.*))?} $refSpec -> file target]} {
+        if {![regexp {^(@[^\#]+)(?:\#(.*))?} $refSpec -> file target]} {
             error "Invalid refSpec: $refSpec"
         }
         set ts [dict get $myDict $file]
@@ -54,7 +53,8 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
         } else {
             error "Can't add a file from outside of -root-dir $options(-root-dir): $fullFn"
         }]
-        string map {/ ::} $relFn
+
+        return @[string map {/ ::} $relFn]
     }
 }
 

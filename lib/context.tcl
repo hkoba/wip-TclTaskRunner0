@@ -31,8 +31,21 @@ snit::type ::TclTaskRunner::RunContext {
         }
     }
 
-    method run {targetTuple args} {
-        $self update $targetTuple 0 {*}$args
+    method run {scope {targetOrMethod ""} args} {
+        if {$targetOrMethod eq ""} {
+            if {[set targetOrMethod [$scope cget -default]] eq ""} {
+                error "No default target in $scope"
+            }
+        }
+        if {[$scope target exists $targetOrMethod]} {
+            set target $targetOrMethod
+            set kind [$scope target kind $target]
+            $self update [list $scope $kind $target] 0 {*}$args
+        } elseif {[$scope info methods $targetOrMethod] ne ""} {
+            $scope $targetOrMethod {*}$args
+        } else {
+            error "No such target/method in $scope: $targetOrMethod"
+        }
     }
 
     # scopeList は引数にしたほうが良いのでは

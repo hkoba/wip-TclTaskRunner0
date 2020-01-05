@@ -29,6 +29,55 @@ test $THEME-load "load *.tcltask" {
         dep load $fn
     }
     
-    dict size [[dep root] taskset get]
+    dict size [dep registry all]
     
 } 2
+
+test $THEME-before-build-1 "before build foo" -body {
+    
+    set result []
+    foreach vn {::varA ::varB ::varC} {lappend result $vn [info exists $vn]}
+    set result
+
+} -result {::varA 0 ::varB 0 ::varC 0}
+
+test $THEME-build-1 "build foo" -body {
+    
+    [dep runner] run [dep registry get @foo]
+
+} -output "varA=BBB CCC\n"
+
+test $THEME-after-build-1 "build foo" -body {
+    
+    set result []
+    foreach vn {::varA ::varB ::varC} {lappend result $vn [set $vn]}
+    set result
+
+} -result {::varA {BBB CCC} ::varB BBB ::varC CCC}
+
+
+test $THEME-after-build-1 "foo xxx 3 8" -body {
+    
+    [[dep registry get @foo] runtime instance] xxx 3 8
+
+} -result 11
+
+
+test $THEME-before-build-2 "before build bar" -body {
+    
+    set result []
+    foreach vn {::varX ::varY ::varZ} {lappend result $vn [info exists $vn]}
+    set result
+
+} -result {::varX 0 ::varY 0 ::varZ 0}
+
+test $THEME-build-2 "build bar" -body {
+    
+    [dep runner] run [dep registry get @bar]
+
+    set result []
+    foreach vn {::varX ::varY ::varZ} {lappend result $vn [set $vn]}
+    set result
+
+} -result {::varX {YYY ZZZ} ::varY YYY ::varZ ZZZ}
+

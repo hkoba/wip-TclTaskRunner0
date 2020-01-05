@@ -9,6 +9,13 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
 
     variable myDict [dict create]
 
+    method all {} {set myDict}
+
+    method get relName {
+        regsub ^@ $relName {} relName
+        dict get $myDict $relName
+    }
+
     method resolve-spec {refSpec {from ""}} {
         # puts "resolve-spec $refSpec from $from"
         if {![regexp {^@([^\#]+)(?:\#(.*))?} $refSpec -> file target]} {

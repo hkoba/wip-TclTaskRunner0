@@ -298,22 +298,18 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         # }
         dict for {name task} $taskDict {
             set deps []
-            if {[dict-cut task dependsTasks]} {
-                foreach depTask $dependsTasks {
-                    lappend deps [if {[regexp ^@ $depTask]} {
-                        $myRegistry resolve-spec $depTask [$def cget -name]
-                    } else {
-                        $def target spec $depTask
-                    }]
-                }
+            foreach depTask [dict-default $task dependsTasks] {
+                lappend deps [if {[regexp ^@ $depTask]} {
+                    $myRegistry resolve-spec $depTask [$def cget -name]
+                } else {
+                    $def target spec $depTask
+                }]
             }
-            if {[dict-cut task dependsFiles]} {
-                foreach depFile $dependsFiles {
-                    if {[$def target exists $depFile]} {
-                        lappend deps [$def target spec $depFile]
-                    } else {
-                        lappend deps [list $def file $depFile]
-                    }
+            foreach depFile [dict-default $task dependsFiles] {
+                if {[$def target exists $depFile]} {
+                    lappend deps [$def target spec $depFile]
+                } else {
+                    lappend deps [list $def file $depFile]
                 }
             }
             dict set task depends $deps

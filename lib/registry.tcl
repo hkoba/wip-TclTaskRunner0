@@ -6,8 +6,10 @@ package require snit
 snit::type ::TclTaskRunner::TaskSetRegistry {
     option -root-dir
     option -task-extension .tcltask
-
+    
     variable myDict [dict create]
+
+    typevariable ourUseSpecRe {^@|\.tcltask$}
 
     method all {} {set myDict}
 
@@ -15,13 +17,33 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
         dict get $myDict $relName
     }
 
+    method parse-use-spec {useSpec {rootNameVar ""}} {
+        if {$rootNameVar ne ""} {
+            upvar 1 $rootNameVar rootName
+        }
+        set rc [regsub $ourUseSpecRe $useSpec {} rootName]
+        if {$rootNameVar ne ""} {
+            return $rc
+        } elseif {!$rc} {
+            error "Invalid use spec: $useSpec"
+        } else {
+            return @$rootName
+        }
+    }
+
+    method parse-extern {refSpec relFileVar targetVar} {
+        upvar 1 $relFileVar relFile
+        upvar 1 $targetVar target
+        regexp {^(@[^\#]+)(?:\#(.*))?} $refSpec -> relFile target
+    }
+
     method resolve-spec {refSpec {from ""}} {
         # puts "resolve-spec $refSpec from $from"
-        if {![regexp {^(@[^\#]+)(?:\#(.*))?} $refSpec -> file target]} {
+        if {![$self parse-extern $refSpec file target]} {
             error "Invalid refSpec: $refSpec"
         }
         set ts [dict get $myDict $file]
-        set actual [if {$target eq ""} {
+        set actual [if {[default target ""] eq ""} {
             if {[set str [$ts cget -default]] eq ""} {
                 error "Can't resolve refSpec '$refSpec'. No default target in taskset [$ts cget -name]"
             }

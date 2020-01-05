@@ -44,6 +44,9 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     variable myMethods [dict create]
     variable myProcs [dict create]
 
+    method dir {} {$self directory}
+    method directory {} { file dirname $options(-file) }
+
     method {runtime typename} {} { return ${selfns}::runtime }
     method {runtime instance} {} { return ${selfns}::instance }
     method {runtime selfns} {} { return ${selfns} }
@@ -54,6 +57,9 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
 
     method deps {} {set myDeps}
     method {target spec} name {
+        if {$name eq ""} {
+            set name $options(-default)
+        }
         set dict [dict get $myDeps $name]
         list $self [dict get $dict kind] $name
     }
@@ -66,8 +72,18 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         dict-default [dict get $myDeps $name] depends []
     }
 
-    method {extern add} {name dict} {
+    method {extern exists} name {
+        dict exists $myExtern $name
+    }
+    method {extern get} name {
+        dict get $myExtern $name
+    }
+    method {extern add} {name dict {asName ""}} {
         dict set myExtern $name $dict
+        if {$asName ne ""} {
+            dict set myExtern $asName $dict
+        }
+        set dict
     }
     method {task add} {name dict} {
         dict set myDeps $name [dict merge $dict [dict create kind task]]
@@ -152,18 +168,19 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     method {declare use} {varName name args} {
         upvar 1 $varName def
         set asName [from args as ""]
+        if {![$myRegistry parse-use-spec $name rootName]} {
+            error "Bad argument for \[use\] statement. '$name' should be either @xxx or xxx.tcltask"
+        }
+        set extName @$rootName
         set subdef [$self taskset ensure-loaded \
-                        [$self filename-from-extern $name $def] \
+                        [$self filename-from-extern $rootName $def] \
                         [+ 1 [$def cget -depth]]]
-        $def extern add $name $subdef $asName
+        $def extern add $extName $subdef \
+            [if {$asName ne ""} {$myRegistry parse-use-spec $asName}]
     }
 
-    method filename-from-extern {name baseDef} {
-        set pattern {^@|\.tcltask$}
-        if {![regsub $pattern $name {} rootName]} {
-            error "Bad argument for \[use\] statement. '$name' should match with $pattern"
-        }
-        set baseDir [file dirname [$baseDef cget -file]]
+    method filename-from-extern {rootName baseDef} {
+        set baseDir [$baseDef dir]
         return $baseDir/$rootName.tcltask
     }
 
@@ -250,7 +267,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             cd [$myRegistry cget -root-dir]
         }
 
-        $self dputs $depth define @$name -file $fn
+        $self dputs $depth define $name -file $fn
 
         $myRegistry add $name \
             [set def [TaskSetDefinition $myRegistry.$name \
@@ -289,7 +306,9 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         set def
     }
     
-    method {taskset finalize} def {
+    method {taskset finalize} {def args} {
+        set depth [from args -depth 0]
+
         upvar 0 [$def varName myDeps] taskDict
         # if {[$def cget -default] eq ""} {
         #     set firstTarget [lindex [dict keys $taskDict] 0]
@@ -299,8 +318,18 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         dict for {name task} $taskDict {
             set deps []
             foreach depTask [dict-default $task dependsTasks] {
-                lappend deps [if {[regexp ^@ $depTask]} {
-                    $myRegistry resolve-spec $depTask [$def cget -name]
+                lappend deps [if {[$myRegistry parse-extern $depTask \
+                                       extScopeName extTarget]} {
+                    if {[$def extern exists $extScopeName]} {
+                        # XXX: Refactor!
+                        set extScope [$def extern get $extScopeName]
+                        $extScope target spec $extTarget
+                    } else {
+                        if {$options(-debug) >= 3} {
+                            $self dputs $depth depTask $depTask is foreign for $def
+                        }
+                        $myRegistry resolve-spec $depTask [$def cget -name]
+                    }
                 } else {
                     $def target spec $depTask
                 }]

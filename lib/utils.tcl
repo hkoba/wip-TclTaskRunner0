@@ -66,5 +66,19 @@ namespace eval ::TclTaskRunner {
         set dict
     }
 
+    # proc re-matched {indices string {varName ""}} {
+    #     lassign $indices first last
+    #     if {$first == -1} {return no}
+    #     if {$varName ne ""} {
+    #         upvar 1 $varName match
+    #     }
+    #     set match [string range $string $first $last]
+    #     if {$varName ne ""} {
+    #         return yes
+    #     } else {
+    #         return $match
+    #     }
+    # }
+
     namespace export *
 }

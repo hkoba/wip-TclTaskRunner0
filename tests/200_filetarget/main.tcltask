@@ -22,3 +22,7 @@ target a.o {a.c a.h} {
 }
 
 proc cc args {exec gcc {*}$args}
+
+method clean {} {
+    file delete {*}[$self target list]
+}

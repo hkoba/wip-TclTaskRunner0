@@ -77,8 +77,6 @@ snit::typemethod TclTaskRunner toplevel args {
 
     set def [$self load $taskFile]
     
-    pushd_scope prevDir [file dirname $taskFile]
-
     # XXX: 複雑すぎるよね. 自由度を損ねずに、簡単化するには？
     [$self runner -debug [$self cget -debug]] \
         run $def {*}$args

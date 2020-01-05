@@ -7,6 +7,7 @@ package require fileutil
 package require struct::list
 
 set testScript [file normalize [info script]]
+set testDir    [file rootname $testScript]
 
 #========================================
 
@@ -23,15 +24,17 @@ test $THEME-create "create TclTaskRunner instance" {
 
 } ::dep
 
+cd /
+
 test $THEME-load "load *.tcltask" {
     
-    foreach fn [glob -directory [file rootname $testScript] *.tcltask] {
+    foreach fn [glob -directory $testDir *.tcltask] {
         dep load $fn
     }
     
-    dict size [dep registry all]
+    list [pwd] [dict size [dep registry all]]
     
-} 2
+} [list $testDir 2]
 
 test $THEME-before-build-1 "before build foo" -body {
     

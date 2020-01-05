@@ -14,6 +14,7 @@ namespace eval TclTaskRunner {
         source [file dirname [::fileutil::fullnormalize [info script]]]/iomacro.tcl
         source [file dirname [::fileutil::fullnormalize [info script]]]/typemacro.tcl
         source [file dirname [::fileutil::fullnormalize [info script]]]/registry.tcl
+        source [file dirname [::fileutil::fullnormalize [info script]]]/logmacro.tcl
     }
 }
 
@@ -111,6 +112,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     
     option -toplevel ""
     option -registry ""
+    option -popd-after-load no
+
     onconfigure -registry root {
         install myRegistry using set root
     }
@@ -229,12 +232,20 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         }
     }
 
-    method {taskset define file} {fn args} {
+    method {taskset define file} {origFn args} {
         set depth [from args -depth 0]
+
+        set fn [fileutil::fullnormalize $origFn]
 
         set name [$myRegistry relative-name $fn]
         if {[$myRegistry exists $name]} {
             error "Conflicting name?? $name"
+        }
+        
+        if {$options(-popd-after-load)} {
+            pushd_scope prevDir [$myRegistry cget -root-dir]
+        } else {
+            cd [$myRegistry cget -root-dir]
         }
 
         $self dputs $depth define @$name -file $fn

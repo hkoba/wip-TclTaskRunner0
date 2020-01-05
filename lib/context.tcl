@@ -37,6 +37,9 @@ snit::type ::TclTaskRunner::RunContext {
                 error "No default target in $scope"
             }
         }
+        if {[set fileName [$scope cget -file]] ne ""} {
+            pushd_scope prevDir [file dirname $fileName]
+        }
         if {[$scope target exists $targetOrMethod]} {
             set target $targetOrMethod
             set kind [$scope target kind $target]
@@ -62,6 +65,10 @@ snit::type ::TclTaskRunner::RunContext {
         }
 
         $self dputs $depth start updating @[$scope cget -name] $target
+
+        if {[set fileName [$scope cget -file]] ne ""} {
+            pushd_scope prevDir [file dirname $fileName]
+        }
 
         set changed []
         set myVisited($targetTuple) 1

@@ -43,6 +43,12 @@ snit::type TclTaskRunner {
             -parent $myRootTaskSet
     }
     
+    method run args {
+        set runner [$self runner]
+        scope_guard runner [list $runner destroy]
+        $runner run {*}$args
+    }
+
     method runner args {
         RunContext $self.runner.%AUTO% {*}$args \
             -registry $myTaskSetRegistry -toplevel $self

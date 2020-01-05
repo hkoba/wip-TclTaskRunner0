@@ -82,7 +82,8 @@ test $THEME-before-build-2 "before build bar" -body {
 
 test $THEME-build-2 "build bar" -body {
     
-    [dep runner] run [dep registry get @bar]
+    # Shorthand form
+    dep run @bar
 
     set result []
     foreach vn {::varX ::varY ::varZ} {lappend result $vn [set $vn]}

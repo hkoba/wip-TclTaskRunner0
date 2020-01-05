@@ -50,6 +50,12 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     method {runtime typename} {} { return ${selfns}::runtime }
     method {runtime instance} {} { return ${selfns}::instance }
     method {runtime selfns} {} { return ${selfns} }
+    method {runtime can} methodName {
+        llength [${selfns}::instance info methods $methodName]
+    }
+    method {runtime invoke} args {
+        ${selfns}::instance {*}$args
+    }
 
     method dump {} {
         list deps $myDeps methods $myMethods procs $myProcs extern $myExtern

@@ -47,8 +47,8 @@ snit::type ::TclTaskRunner::RunContext {
             set target $targetOrMethod
             set kind [$scope target kind $target]
             $self update [list $scope $kind $target] 0 {*}$args
-        } elseif {[$scope info methods $targetOrMethod] ne ""} {
-            $scope $targetOrMethod {*}$args
+        } elseif {[$scope runtime can $targetOrMethod]} {
+            $scope runtime invoke $targetOrMethod {*}$args
         } else {
             error "No such target/method in $scope: $targetOrMethod"
         }

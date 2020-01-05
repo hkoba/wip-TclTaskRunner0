@@ -206,13 +206,13 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     method {annotate public} {varName kind targetName args} {
         if {$kind ne "target"} {error "Invalid kind: $kind"}
         uplevel 1 [list $self target add $varName $targetName {*}$args \
-            public yes]
+                       public yes]
     }
 
     method {annotate default} {varName kind targetName args} {
         if {$kind ne "target"} {error "Invalid kind: $kind"}
         uplevel 1 [list $self target add $varName $targetName {*}$args \
-            public yes]
+                       public yes]
         upvar 1 $varName def
         $def configure -default $targetName
     }
@@ -310,11 +310,11 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     method {taskset compile} {def args} {
         set depth [from args -depth 0]
 
-	set script [__EXPAND $ourTypeTemplate \
-		     %TYPENAME% [$def runtime typename] \
-                     %METHODS% [join [$def misc get method] \n] \
-                     %PROCS% [join [$def misc get proc] \n] \
-                    ]
+        set script [__EXPAND $ourTypeTemplate \
+                        %TYPENAME% [$def runtime typename] \
+                        %METHODS% [join [$def misc get method] \n] \
+                        %PROCS% [join [$def misc get proc] \n] \
+                       ]
         
         if {$options(-debug) >= 2} {
             $self dputs $depth runtime type: $script
@@ -327,15 +327,16 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     }
     
     proc __EXPAND {template args} {
-	string map $args $template
+        string map $args $template
     }
 
     typevariable ourTypeTemplate {
         snit::type %TYPENAME% {
-	    option -props
-            method selfns {} {return $selfns}
+            option -props
             %METHODS%
             %PROCS%
+            method selfns {} {return $selfns}
+            
         }
     }
 }

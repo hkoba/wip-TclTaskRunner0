@@ -1,0 +1,54 @@
+#!/usr/bin/env tclsh
+
+package require fileutil
+
+package require tcltest
+namespace import tcltest::*
+
+set testScript [file normalize [info script]]
+set testDir    [file rootname $testScript]
+
+test load "Make sure it is loadable." {
+    source [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
+} ""
+
+
+set THEME subtaskfile
+
+test $THEME-create "create TclTaskRunner instance" {
+
+    set debug [TclTaskRunner::default ::env(DEBUG) 0]
+    TclTaskRunner dep -debug $debug -quiet [expr {! $debug}]
+
+} ::dep
+
+test $THEME-load "load main.tcltask (loads total 3 tcltask files)" {
+    
+    dep load $testDir/main.tcltask
+    
+    dict size [dep registry all]
+    
+} 3
+
+test $THEME-before-build-1 "before build foo" -body {
+    
+    set result []
+    foreach vn {::foo ::b2 ::baz} {lappend result $vn [info exists $vn]}
+    set result
+
+} -result {::foo 0 ::b2 0 ::baz 0}
+
+test $THEME-build-1 "build foo" -body {
+    
+    [dep runner] run @main
+
+} -output "FOO BAR BAZ\n"
+
+test $THEME-after-build-1 "after build foo" -body {
+    
+    set result []
+    foreach vn {::foo ::b2 ::baz} {lappend result $vn [set $vn]}
+    set result
+
+} -result {::foo FOO ::b2 BAR ::baz BAZ}
+

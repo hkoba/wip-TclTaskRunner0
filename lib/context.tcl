@@ -32,6 +32,9 @@ snit::type ::TclTaskRunner::RunContext {
     }
 
     method run {scope {targetOrMethod ""} args} {
+        if {[info commands $scope] eq "" && [regexp ^@ $scope] && $options(-registry) ne ""} {
+            set scope [$options(-registry) get $scope]
+        }
         if {$targetOrMethod eq ""} {
             if {[set targetOrMethod [$scope cget -default]] eq ""} {
                 error "No default target in $scope"

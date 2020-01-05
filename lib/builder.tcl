@@ -51,6 +51,7 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         list deps $myDeps methods $myMethods procs $myProcs extern $myExtern
     }
 
+    method deps {} {set myDeps}
     method {target spec} name {
         set dict [dict get $myDeps $name]
         list $self [dict get $dict kind] $name
@@ -314,6 +315,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                         %TYPENAME% [$def runtime typename] \
                         %METHODS% [join [$def misc get method] \n] \
                         %PROCS% [join [$def misc get proc] \n] \
+                        %DEPS% [$def deps] \
                        ]
         
         if {$options(-debug) >= 2} {
@@ -335,13 +337,14 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             option -props
             %METHODS%
             %PROCS%
+            typevariable ourDeps {%DEPS%}
             method selfns {} {return $selfns}
-            
+            method {target list} {} {dict keys $ourDeps}
         }
     }
 }
 
 if {![info level] && [info script] eq $::argv0} {
-    ::TclTaskRunner::TaskSetBuilder bld
+    ::TclTaskRunner::TaskSetBuilder bld -debug 10
     puts [bld {*}$::argv]
 }

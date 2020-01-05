@@ -62,6 +62,12 @@ test $THEME-after-build-1 "foo xxx 3 8" -body {
 
 } -result 11
 
+test $THEME-after-build-1 "foo target list" -body {
+    
+    [[dep registry get @foo] runtime instance] target list
+
+} -result {taskA taskB taskC}
+
 
 test $THEME-before-build-2 "before build bar" -body {
     

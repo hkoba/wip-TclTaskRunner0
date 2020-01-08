@@ -29,7 +29,7 @@ cd /
 test $THEME-load "load *.tcltask" {
     
     foreach fn [glob -directory $testDir *.tcltask] {
-        dep load $fn
+        dep use $fn
     }
     
     list [pwd] [dict size [dep registry all]]

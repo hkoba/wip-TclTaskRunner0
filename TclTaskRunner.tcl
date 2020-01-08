@@ -32,9 +32,8 @@ snit::type TclTaskRunner {
             -debug $options(-debug)
     }
 
-    method load {scriptFileName args} {
-        $myBuilder taskset define file $scriptFileName \
-             {*}$args
+    method use scriptFileName {
+        $myBuilder taskset ensure-loaded $scriptFileName
     }
 
     method define script {

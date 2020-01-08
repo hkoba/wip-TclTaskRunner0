@@ -24,7 +24,7 @@ test $THEME-create "create TclTaskRunner instance" {
 
 test $THEME-load "load main.tcltask (loads total 3 tcltask files)" {
     
-    dep load $testDir/main.tcltask
+    dep use $testDir/main.tcltask
     
     dict size [dep registry all]
     

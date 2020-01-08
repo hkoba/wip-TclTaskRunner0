@@ -24,7 +24,7 @@ test $THEME-create "create TclTaskRunner instance" {
 
 test $THEME-load "load *.tcltask" {
     
-    set taskSetDefinition [dep load $testDir/main.tcltask]
+    set taskSetDefinition [dep use $testDir/main.tcltask]
     
     string equal $taskSetDefinition \
         [dep registry get @main]

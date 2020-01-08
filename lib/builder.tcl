@@ -248,7 +248,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     #========================================
 
-    method {taskset ensure-loaded} {fn depth} {
+    method {taskset ensure-loaded} {fn {depth 0}} {
         set name [$myRegistry relative-name $fn]
         if {[$myRegistry exists $name]} {
             $myRegistry get $name

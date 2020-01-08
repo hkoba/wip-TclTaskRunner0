@@ -7,13 +7,47 @@ namespace import tcltest::*
 
 set testScript [file normalize [info script]]
 set testDir    [file rootname $testScript]
+set runnerFn   [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
 
-test load "Make sure it is loadable." {
-    source [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
-} ""
-
+#========================================
 
 set THEME filetarget
+
+test load "Make sure it is loadable." {
+    source $runnerFn
+} ""
+
+#----------------------------------------
+
+cd /
+
+test $THEME-exec-1 "exec main.tcltask clean" -body {
+
+    exec [info nameofexecutable] $runnerFn --quiet $testDir/main.tcltask clean
+
+    file exists $testDir/prog
+
+} -result 0
+
+test $THEME-exec-2 "exec main.tcltask" -body {
+
+    exec [info nameofexecutable] $runnerFn $testDir/main.tcltask
+
+} -result "# cc -c main.c -o main.o
+# cc -c a.c -o a.o
+# cc -c b.c -o b.o
+# cc -c c.c -o c.o
+# cc main.o a.o b.o c.o -o prog"
+
+test $THEME-exec-result "exec main.tcltask" -body {
+    set result []
+    lappend result [file exists $testDir/prog]
+    exec [info nameofexecutable] $runnerFn --quiet $testDir/main.tcltask clean
+    lappend result [file exists $testDir/prog]
+
+} -result {1 0}
+
+#----------------------------------------
 
 test $THEME-create "create TclTaskRunner instance" {
 

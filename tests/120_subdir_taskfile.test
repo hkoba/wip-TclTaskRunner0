@@ -7,13 +7,27 @@ namespace import tcltest::*
 
 set testScript [file normalize [info script]]
 set testDir    [file rootname $testScript]
+set runnerFn   [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
 
-test load "Make sure it is loadable." {
-    source [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
-} ""
-
+#========================================
 
 set THEME subdir-subtask
+
+test load "Make sure it is loadable." {
+    source $runnerFn
+} ""
+
+#----------------------------------------
+
+cd /
+
+test $THEME-exec "exec main.tcltask" -body {
+
+    exec [info nameofexecutable] $runnerFn --quiet $testDir/main.tcltask
+
+} -result {FOO BAR BAZ}
+
+#----------------------------------------
 
 test $THEME-create "create TclTaskRunner instance" {
 
@@ -21,6 +35,8 @@ test $THEME-create "create TclTaskRunner instance" {
     TclTaskRunner dep -debug $debug -quiet [expr {! $debug}]
 
 } ::dep
+
+
 
 test $THEME-load "load main.tcltask (loads total 3 tcltask files)" {
     

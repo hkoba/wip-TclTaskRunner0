@@ -14,6 +14,7 @@ source $::TclTaskRunner::libDir/utils.tcl
 source $::TclTaskRunner::libDir/iomacro.tcl
 source $::TclTaskRunner::libDir/typemacro.tcl
 source $::TclTaskRunner::libDir/logmacro.tcl
+source $::TclTaskRunner::libDir/tasksetdef.tcl
 
 snit::type TclTaskRunner {
     component myTaskSetRegistry -public registry

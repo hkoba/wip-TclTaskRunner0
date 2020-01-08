@@ -54,7 +54,6 @@ snit::type ::TclTaskRunner::RunContext {
         }
     }
 
-    # scopeList は引数にしたほうが良いのでは
     # targetTuple == [list $scope $kind $name]
 
     method update {targetTuple depth args} {

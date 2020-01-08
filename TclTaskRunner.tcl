@@ -22,8 +22,7 @@ snit::type TclTaskRunner {
     variable myBuilder
 
     option -dry-run no
-    option -debug
-    option -quiet
+    ::TclTaskRunner::use_logging
 
     constructor args {
         install myTaskSetRegistry using TaskSetRegistry $self.registry
@@ -83,7 +82,7 @@ snit::typemethod TclTaskRunner toplevel args {
         exit 1
     }
 
-    set def [$self load $taskFile]
+    set def [$self use $taskFile]
     
     # XXX: 複雑すぎるよね. 自由度を損ねずに、簡単化するには？
     [$self runner -debug [$self cget -debug]] \

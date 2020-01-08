@@ -1,0 +1,14 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+default target oo check {
+    info exists ::OO
+} action {
+    set ::OO OO
+}
+
+target baz check {
+    info exists ::baz
+} action {
+    set ::baz BAZ
+}

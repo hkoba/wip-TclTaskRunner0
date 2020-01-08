@@ -1,0 +1,31 @@
+#!/usr/bin/env tclsh
+
+package require fileutil
+
+package require tcltest
+namespace import tcltest::*
+
+set testScript [file normalize [info script]]
+set testDir    [file rootname $testScript]
+
+test load "Make sure it is loadable." {
+    source [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
+} ""
+
+
+set THEME dag
+
+test $THEME-create "create TclTaskRunner instance" {
+
+    set debug [TclTaskRunner::default ::env(DEBUG) 0]
+    TclTaskRunner dep -debug $debug -quiet [expr {! $debug}]
+
+} ::dep
+
+test $THEME-load "load main.tcltask (loads total 3 tcltask files)" {
+    
+    dep use $testDir/main.tcltask
+    
+    dict size [dep registry all]
+    
+} 3

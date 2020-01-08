@@ -1,0 +1,9 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+use @foo
+use @boo
+
+default target x1 dependsTasks {@foo @boo} action {
+    puts [list $::foo $::boo]
+}

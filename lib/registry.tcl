@@ -17,6 +17,10 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
         dict get $myDict $relName
     }
 
+    method exists relName {
+        dict exists $myDict $relName
+    }
+
     method parse-use-spec {useSpec {rootNameVar ""}} {
         if {$rootNameVar ne ""} {
             upvar 1 $rootNameVar rootName
@@ -58,10 +62,6 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
 
     method add {relName def} {
         dict set myDict $relName $def
-    }
-
-    method exists relName {
-        dict exists $myDict $relName
     }
 
     method relative-name file {

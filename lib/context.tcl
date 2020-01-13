@@ -81,6 +81,8 @@ snit::type ::TclTaskRunner::RunContext {
             $self dputs $depth [$scope varName myDeps] [set [$scope varName myDeps]]
         }
 
+        set thisMtime [$self mtime $targetTuple $depth]
+
         foreach pred $depends {
             $self dputs $depth testing $pred from $targetTuple
             if {[set v [default myVisited($pred) 0]] == 0} {
@@ -88,7 +90,6 @@ snit::type ::TclTaskRunner::RunContext {
             } elseif {$v == 1} {
                 error "Task $pred and $targetTuple are circularly defined!"
             }
-            set thisMtime [$self mtime $targetTuple $depth]
             set predMtime [$self mtime $pred $depth]
             if {$thisMtime < $predMtime} {
                 lappend changed $pred
@@ -102,7 +103,8 @@ snit::type ::TclTaskRunner::RunContext {
         
         set myVisited($targetTuple) 2
         
-        if {[llength $changed] || $depends eq ""} {
+        if {[llength $changed]
+            || ($depends eq "" && $thisMtime == -Inf)} {
             $self target try action $targetTuple $depth
         } else {
             $self dputs $depth No need to update $target

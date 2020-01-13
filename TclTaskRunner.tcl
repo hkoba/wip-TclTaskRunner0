@@ -42,16 +42,26 @@ snit::type TclTaskRunner {
             -parent $myRootTaskSet
     }
     
-    method run args {
+    method run {scopeOrFileName args} {
+
+        set scope [if {[file exists $scopeOrFileName]} {
+            $self use $scopeOrFileName
+        } elseif {[$myTaskSetRegistry exists $scopeOrFileName]} {
+            set scopeOrFileName
+        } else {
+            error "No such taskset: $scopeOrFileName"
+        }]
+
         set runner [$self runner]
         scope_guard runner [list $runner destroy]
-        $runner run {*}$args
+        $runner run $scope {*}$args
     }
 
     method runner args {
         RunContext $self.runner.%AUTO% {*}$args \
             -quiet $options(-quiet) \
             -dry-run $options(-dry-run) \
+            -debug $options(-debug) \
             -registry $myTaskSetRegistry -toplevel $self
     }
 }
@@ -83,10 +93,11 @@ snit::typemethod TclTaskRunner toplevel args {
     }
 
     set def [$self use $taskFile]
-    
-    # XXX: 複雑すぎるよね. 自由度を損ねずに、簡単化するには？
-    [$self runner -debug [$self cget -debug]] \
-        run $def {*}$args
+
+    set runner [$self runner]
+    scope_guard runner [list $runner destroy]
+
+    $runner run $def {*}$args
 }
 
 if {![info level] && [info script] eq $::argv0} {

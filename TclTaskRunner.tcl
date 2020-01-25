@@ -42,6 +42,19 @@ snit::type TclTaskRunner {
             -parent $myRootTaskSet
     }
     
+    method verify args {
+        foreach path $args {
+            if {[file isdirectory $path]} {
+                $self verify {*}[lsort -dictionary [glob -nocomplain -directory $path *.tcltask]]
+                
+            } elseif {![file exists $path]} {
+                $self verify {*}[lsort -dictionary [glob -nocomplain $path]]
+            } else {
+                $self use $path
+            }
+        }
+    }
+
     method run {scopeOrFileName args} {
 
         set scope [if {[file exists $scopeOrFileName]} {
@@ -72,6 +85,15 @@ source $TclTaskRunner::libDir/registry.tcl
 
 snit::method TclTaskRunner usage args {
     return "Usage: [file tail $TclTaskRunner::scriptFn] ?main.tcltask?"
+}
+
+snit::typemethod TclTaskRunner oneshot {varName script args} {
+    upvar 1 $varName self
+    set self [$type %AUTO% {*}$args]
+
+    scope_guard self [list $self destroy]
+    
+    uplevel 1 $script
 }
 
 snit::typemethod TclTaskRunner toplevel args {

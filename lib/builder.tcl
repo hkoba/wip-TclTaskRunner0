@@ -103,10 +103,10 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         }
         foreach {name value} $args {
             if {![dict exists $ourKnownKeys $name]} {
-                error "Unknown item $name in target $targetName file [$def cget -file]"
+                error "Unknown item '$name' in target '$targetName' file '[$def cget -file]'"
             }
             if {[dict exists $dict $name]} {
-                error "Duplicate item $name in target $targetName file [$def cget -file]"
+                error "Duplicate item '$name' in target '$targetName' file '[$def cget -file]'"
             }
             dict set dict $name $value
         }

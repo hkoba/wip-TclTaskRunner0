@@ -89,6 +89,10 @@ snit::method TclTaskRunner usage args {
 
 snit::typemethod TclTaskRunner oneshot {varName script args} {
     upvar 1 $varName self
+    
+    set oldDir [pwd]
+    scope_guard oldDir [list cd $oldDir]
+
     set self [$type %AUTO% {*}$args]
 
     scope_guard self [list $self destroy]

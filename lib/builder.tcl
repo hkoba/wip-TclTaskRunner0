@@ -54,7 +54,14 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
         interp alias $myInterp target \
             {} $self target add $varName
-
+        interp alias $myInterp TARGET \
+            {} $self target add $varName
+        
+        interp alias $myInterp target-file \
+            {} $self target-file add $varName
+        interp alias $myInterp FILE \
+            {} $self target-file add $varName
+        
         interp alias $myInterp method \
             {} $self add method $varName
         interp alias $myInterp proc \
@@ -83,12 +90,22 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         return $baseDir/$rootName.tcltask
     }
 
+    method {target-file add} {varName targetName dependsFiles action} {
+        upvar 1 $varName def
+        set dict [dict create \
+                      public no \
+                      dependsFiles $dependsFiles action $action]
+        $def file add $targetName $dict
+        set targetName
+    }
+
     method {target add} {varName targetName args} {
         upvar 1 $varName def
         lassign [$self precheck target $def $targetName {*}$args] \
             kind dict
         dict-set-default dict public no
         $def $kind add $targetName $dict
+        set targetName
     }
     
     typevariable ourKnownKeys [::TclTaskRunner::enum_dict \
@@ -97,10 +114,6 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     method {precheck target} {def targetName args} {
         set dict [dict create]
-        if {[llength $args] == 2} {
-            lassign $args files action
-            set args [list dependsFiles $files action $action]
-        }
         foreach {name value} $args {
             if {![dict exists $ourKnownKeys $name]} {
                 error "Unknown item '$name' in target '$targetName' file '[$def cget -file]'"

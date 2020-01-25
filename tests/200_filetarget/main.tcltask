@@ -13,11 +13,11 @@ target c.o dependsFiles {c.c c.h} action {
     cc -c $< -o $@
 }
 
-target b.o {b.c b.h} {
+FILE b.o {b.c b.h} {
     cc -c $< -o $@
 }
 
-target a.o {a.c a.h} {
+FILE a.o {a.c a.h} {
     cc -c $< -o $@
 }
 

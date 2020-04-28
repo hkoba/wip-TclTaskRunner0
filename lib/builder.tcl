@@ -166,7 +166,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     method {taskset define file} {origFn args} {
         set depth [from args -depth 0]
 
-        set fn [fileutil::fullnormalize $origFn]
+        set fn [fileutil::lexnormalize $origFn]
 
         set name [$myRegistry relative-name $fn]
         if {[$myRegistry exists $name]} {

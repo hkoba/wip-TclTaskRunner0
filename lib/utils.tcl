@@ -4,6 +4,8 @@ namespace eval ::TclTaskRunner {
 
     proc + {x y} {expr {$x + $y}}
 
+    proc value value {set value}
+
     proc default {varName {default ""}} {
         upvar 1 $varName var
         if {[info exists var]} {

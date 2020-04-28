@@ -124,9 +124,9 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             dict set dict $name $value
         }
         set kind [if {[dict exists $dict check]} {
-            string cat task
+            value task
         } else {
-            string cat file
+            value file
         }]
         
         list $kind $dict

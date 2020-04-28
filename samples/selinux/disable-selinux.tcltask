@@ -1,0 +1,44 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- coding: utf-8; mode: tcl -*-
+
+source utils.tcl
+
+default target disable-selinux check {
+
+    set runtime_enabled [expr {![catch {exec selinuxenabled}]}]
+
+    set cmd [list | perl /admkit/scripts/ensure-selinux-disabled.pl \
+                 -q /etc/selinux/config 2>@1]
+
+    set config_result \
+        [lassign [$self fh_gather_patterns [open $cmd] {^Already OK}] \
+             config_disabled]
+
+    list [expr {!$runtime_enabled && $config_disabled}] \
+        runtime_enabled $runtime_enabled \
+        config_disabled $config_disabled \
+        {*}$config_result
+
+} action {
+    
+    set cmd [list | perl -i /admkit/scripts/ensure-selinux-disabled.pl \
+                 -q /etc/selinux/config 2>@1]
+
+    read_file $cmd
+}
+
+
+method fh_gather_patterns {fh okPat} {
+    scope_guard fh [list close $fh]
+
+    set okList {}
+    set ngList {}
+    while {[gets $fh line] >= 0} {
+        if {[regexp $okPat $line]} {
+            lappend okList $line
+        } else {
+            lappend ngList $line
+        }
+    }
+    list [expr {$ngList eq ""}] OK $okList NG $ngList
+}

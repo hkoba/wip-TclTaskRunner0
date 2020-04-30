@@ -270,7 +270,10 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                        ]
         
         if {$options(-debug) >= 2} {
-            $self dputs $depth runtime type: $script
+            $self dputs $depth =======
+            $self dputs $depth runtime type:
+            $self dputs $depth [string trim $script]
+            $self dputs $depth =======
         }
 
         uplevel #0 $script

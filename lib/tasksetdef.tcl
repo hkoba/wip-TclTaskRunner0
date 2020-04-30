@@ -4,6 +4,8 @@
 package require snit
 package require fileutil
 
+# This type implements $def in TclTaskRunner.tcl
+# and also is called as $scope in RunContext.
 snit::type ::TclTaskRunner::TaskSetDefinition {
     option -parent
     option -name ""

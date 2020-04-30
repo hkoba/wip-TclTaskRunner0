@@ -22,7 +22,7 @@ default target disable-selinux check {
 } action {
     
     set cmd [list | perl -i /admkit/scripts/ensure-selinux-disabled.pl \
-                 -q /etc/selinux/config 2>@1]
+                 /etc/selinux/config 2>@1]
 
     read_file $cmd
 

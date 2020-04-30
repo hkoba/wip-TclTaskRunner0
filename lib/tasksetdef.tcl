@@ -112,6 +112,10 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         dict values [dict-default $myMisc $kind $default]
     }
 
+    method {target subst} {target string} {
+        string map [$self var-map $target] $string
+    }
+
     method var-map target {
         set depList []
         foreach d [$self target depends $target] {

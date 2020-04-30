@@ -139,18 +139,13 @@ snit::type ::TclTaskRunner::RunContext {
     
     method {worker subst-apply-to} {scope target depth script} {
         $self worker apply-to $scope $target $depth \
-            [$self target subst script $scope $target $script]
+            [$scope target subst $target $script]
     }
 
     method {worker apply-to} {scope target depth subst} {
         set targetNS [$scope runtime typename]
         {*}$myWorker [list apply [list {self target} $subst $targetNS] \
                           [$scope runtime instance] $target]
-    }
-
-    method {target subst script} {scope target script} {
-        set vmap [$scope var-map $target]
-        string map $vmap $script
     }
 
     proc is-ok-or {resList default} {
@@ -198,7 +193,7 @@ snit::type ::TclTaskRunner::RunContext {
             return
         }
         
-        set subst [$self target subst script $scope $target $script]
+        set subst [$scope target subst $target $script]
 
         if {$options(-quiet)} {
             $self dputs $depth running $scriptType script for $targetTuple = [string trim $subst]

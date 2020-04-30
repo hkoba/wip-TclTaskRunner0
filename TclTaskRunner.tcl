@@ -24,6 +24,8 @@ snit::type TclTaskRunner {
     option -dry-run no
     ::TclTaskRunner::use_logging
 
+    option -report-command []
+
     constructor args {
         install myTaskSetRegistry using TaskSetRegistry $self.registry
         $self configurelist $args
@@ -83,6 +85,18 @@ snit::type TclTaskRunner {
             }
         }
         return OK
+    }
+
+    method report result {
+        if {$options(-report-command) ne ""} {
+            $options(-report-command) $result
+        } else {
+            if {$result eq "OK"} {
+                puts $result
+            } else {
+                $type alert $result
+            }
+        }
     }
 
     method runner args {

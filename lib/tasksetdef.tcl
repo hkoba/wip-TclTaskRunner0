@@ -122,6 +122,10 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
               [dict get $myDeps $name kind] eq "file"}
     }
 
+    variable myImportList []
+    method {import add} {pattern fromFile} { lappend myImportList [list $pattern $fromFile] }
+    method {import list} {} {set myImportList}
+
     variable myMisc [dict create method [] proc []]
     method {misc add} {kind name body} {
         dict set myMisc $kind $name $body

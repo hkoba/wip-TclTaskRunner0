@@ -69,6 +69,9 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
         interp alias $myInterp use \
             {} $self declare use $varName
+        
+        interp alias $myInterp import \
+            {} $self declare import $varName
     }
 
     method {declare use} {varName name args} {
@@ -83,6 +86,12 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                         [+ 1 [$def cget -depth]]]
         $def extern add $extName $subdef \
             [if {$asName ne ""} {$myRegistry parse-use-spec $asName}]
+    }
+
+    method {declare import} {varName what _from fromFn} {
+        upvar 1 $varName def
+        if {$_from ne "from"} {error "Only \[import pattern from file] is supported"}
+        $def import add $what $fromFn
     }
 
     method filename-from-extern {rootName baseDef} {
@@ -269,6 +278,19 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                         %DEPS% [$def deps] \
                        ]
         
+        foreach spec [$def import list] {
+            lassign $spec pattern fromFile
+            set gotNS [uplevel #0 [list source $fromFile]]
+            if {$gotNS ne ""} {
+                append script [list namespace eval [$def runtime typename] \
+                    [list apply {{ns args} {
+                        foreach pat $args {
+                            namespace import ${ns}::$pat
+                        }
+                    }} $gotNS {*}$pattern]]\n
+            }
+        }
+
         if {$options(-debug) >= 2} {
             $self dputs $depth =======
             $self dputs $depth runtime type:

@@ -67,9 +67,14 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     }
     method {target exists} name {dict exists $myDeps $name}
     method {target get} name {dict get $myDeps $name}
-    method {target kind} name {
-        dict get $myDeps $name kind
+    
+    # Below defines [$scope target check $targetName],  [$scope target action $targetName] and so on.
+    foreach key $knownKeys {
+        method [list target $key] name [string map [list @KEY@ $key ] {
+            dict-default [dict get $myDeps $name] @KEY@ []
+        }]
     }
+
     method {target depends} name {
         dict-default [dict get $myDeps $name] depends []
     }

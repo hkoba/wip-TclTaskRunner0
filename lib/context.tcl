@@ -151,9 +151,7 @@ snit::type ::TclTaskRunner::RunContext {
     }
 
     method {worker apply-to} {scope target depth subst} {
-        set targetNS [$scope runtime typename]
-        {*}$myWorker [list apply [list {self target} $subst $targetNS] \
-                          [$scope runtime instance] $target]
+        {*}$myWorker [$scope target lambda $target $subst]
     }
 
     proc is-ok-or {resList default} {

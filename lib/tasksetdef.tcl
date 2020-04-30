@@ -15,6 +15,7 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     
     typevariable ourKnownKeys [set knownKeys [::TclTaskRunner::enum_dict \
                                                   kind  public check action \
+                                                  vars \
                                                   diag \
                                                   dependsTasks dependsFiles]]
     typemethod knownKey name {
@@ -68,6 +69,23 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     method {target exists} name {dict exists $myDeps $name}
     method {target get} name {dict get $myDeps $name}
     
+    method {target lambda} {target script} {
+        set targetNS [$self runtime typename]
+        lassign [$self target extra-args $target] vars values
+        list apply [list [list self target {*}$vars] $script $targetNS] \
+            [$self runtime instance] $target {*}$values
+    }
+
+    method {target extra-args} target {
+        set vars []
+        set vals []
+        foreach {var val} [dict-default [dict get $myDeps $target] vars] {
+            lappend vars $var
+            lappend vals $val
+        }
+        list $vars $vals
+    }
+
     # Below defines [$scope target check $targetName],  [$scope target action $targetName] and so on.
     foreach key $knownKeys {
         method [list target $key] name [string map [list @KEY@ $key ] {

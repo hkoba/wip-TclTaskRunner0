@@ -66,7 +66,7 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
     }
 
     method relative-name file {
-        set fullFn [file rootname [fileutil::lexnormalize $file]]
+        set fullFn [file rootname [fileutil::lexnormalize [file normalize $file]]]
         set relFn [if {$options(-root-dir) eq ""} {
             set options(-root-dir) [file dirname $fullFn]/
             file tail $fullFn

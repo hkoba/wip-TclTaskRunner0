@@ -225,6 +225,10 @@ proc append_file {fn data args} {
     write_file $fn $data {*}$args -access a
 }
 
+proc append_file_line {fn data args} {
+    write_file $fn $data\n {*}$args -access a
+}
+
 proc write_file_lines {fn list args} {
     write_file $fn [join $list \n] {*}$args
 }

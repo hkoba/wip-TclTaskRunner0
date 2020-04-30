@@ -25,6 +25,9 @@ default target disable-selinux check {
                  -q /etc/selinux/config 2>@1]
 
     read_file $cmd
+
+} diag {
+    You need to reboot this machine to achieve $@
 }
 
 

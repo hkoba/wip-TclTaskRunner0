@@ -108,14 +108,15 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         set targetName
     }
     
-    typevariable ourKnownKeys [::TclTaskRunner::enum_dict \
-                                   public check action \
-                                   dependsTasks dependsFiles]
+    typevariable ourTaskSetType TaskSetDefinition
 
+    #
+    # Keyword dictionary of target definition.
+    #
     method {precheck target} {def targetName args} {
         set dict [dict create]
         foreach {name value} $args {
-            if {![dict exists $ourKnownKeys $name]} {
+            if {![$ourTaskSetType knownKey $name]} {
                 error "Unknown item '$name' in target '$targetName' file '[$def cget -file]'"
             }
             if {[dict exists $dict $name]} {
@@ -182,7 +183,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         $self dputs $depth define $name -file $fn
 
         $myRegistry add $name \
-            [set def [TaskSetDefinition $myRegistry.$name \
+            [set def [$ourTaskSetType $myRegistry.$name \
                           -name $name -file $fn \
                           -depth $depth \
                           {*}$args]]

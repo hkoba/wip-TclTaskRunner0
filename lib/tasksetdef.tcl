@@ -11,6 +11,14 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     option -default ""
     option -depth 0
     
+    typevariable ourKnownKeys [set knownKeys [::TclTaskRunner::enum_dict \
+                                                  kind  public check action \
+                                                  diag \
+                                                  dependsTasks dependsFiles]]
+    typemethod knownKey name {
+        dict exists $ourKnownKeys $name
+    }
+
     variable myExtern [dict create]
 
     variable myDeps [dict create]

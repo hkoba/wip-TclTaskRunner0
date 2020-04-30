@@ -70,6 +70,21 @@ snit::type TclTaskRunner {
         $runner run $scope {*}$args
     }
 
+    method run-all args {
+        foreach taskFn $args {
+            if {[catch {$self run $taskFn} result resOpts]} {
+                if {[lindex [set ec [dict-default $resOpts -errorcode]] 0]
+                    eq "failed-target"} {
+                    $type alert $result
+                } else {
+                    puts stderr $::errorInfo
+                }
+                return NG
+            }
+        }
+        return OK
+    }
+
     method runner args {
         RunContext $self.runner.%AUTO% {*}$args \
             -quiet $options(-quiet) \
@@ -82,6 +97,7 @@ snit::type TclTaskRunner {
 source $TclTaskRunner::libDir/builder.tcl
 source $TclTaskRunner::libDir/context.tcl
 source $TclTaskRunner::libDir/registry.tcl
+source $TclTaskRunner::libDir/termcolor.tcl
 
 snit::method TclTaskRunner usage args {
     return "Usage: [file tail $TclTaskRunner::scriptFn] ?main.tcltask?"

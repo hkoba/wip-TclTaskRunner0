@@ -208,11 +208,25 @@ snit::type ::TclTaskRunner::RunContext {
 
             set myState($targetTuple,$scriptType) $resList
             
-            if {![is-ok-or [$self target try check $targetTuple $depth] yes]} {
-                error "postcheck failed after action $targetTuple"
+            if {![is-ok-or [set postCheckRes [$self target try check $targetTuple $depth]] yes]} {
+                
+                if {[set diag [string trim [$scope target diag $target]]] ne ""} {
+                    $self target diag $target \
+                        [$scope target subst $target $diag] \
+                        $postCheckRes
+
+                } else {
+                    error "postcheck failed after action $targetTuple - postCheck=$postCheck"
+                }
             }
         }
         
         lappend myUpdated($targetTuple)
+    }
+    
+    method {target diag} {target diag result} {
+        return -code error \
+            -errorcode [list failed-target $target result $result] \
+            $diag
     }
 }

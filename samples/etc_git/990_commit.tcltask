@@ -10,7 +10,7 @@ default target commit dependsTasks @etc_git check {
     list [expr {$status eq ""}] status $status
 
 } action {
-    exec git --work-tree=/etc --git-dir=/etc/.git add -A
+    exec git --work-tree=/etc --git-dir=/etc/.git add -A :/
 
     exec -ignorestderr git --work-tree=/etc --git-dir=/etc/.git commit -m init
 }

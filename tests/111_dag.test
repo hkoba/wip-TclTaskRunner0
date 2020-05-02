@@ -36,7 +36,7 @@ test $THEME-create "create TclTaskRunner instance" {
 
 } ::dep
 
-test $THEME-load "load main.tcltask (loads total 3 tcltask files)" {
+test $THEME-load "load main.tcltask (loads total 4 tcltask files)" {
     
     dep use $testDir/main.tcltask
     

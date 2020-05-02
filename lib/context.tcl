@@ -20,37 +20,6 @@ snit::type ::TclTaskRunner::RunContext {
         install myWorker using set worker
     }
 
-    constructor args {
-        $self configurelist $args
-        $self worker init
-    }
-
-    method {worker init} {} {
-        if {$myWorker eq ""} {
-            if {$options(-isolate)} {
-                install myWorker using list [interp create $self.worker] eval
-            } else {
-                install myWorker using list interp eval {}
-            }
-        }
-        
-        {*}$myWorker [list namespace eval :: [list package require snit]]
-
-        $self worker sync
-    }
-
-    method {worker eval} args {
-        {*}$myWorker $args
-    }
-
-    method {worker sync} {} {
-        if {[{*}$myWorker [list info commands ::TclTaskRunner]] eq ""} {
-            set script [TclTaskRunner::ns-definition ::TclTaskRunner]
-            # puts [list \# sync script $script]
-            {*}$myWorker $script
-        }
-    }
-
     method run {scope {targetOrMethod ""} args} {
         if {[info commands $scope] eq "" && [regexp ^@ $scope]
             && $options(-registry) ne ""} {

@@ -40,6 +40,7 @@ test $THEME-create "create TclTaskRunner instance" {
 
 test $THEME-load "load main.tcltask (loads total 3 tcltask files)" {
     
+    dep worker steal puts
     dep use $testDir/main.tcltask
     
     dict size [dep registry all]
@@ -63,7 +64,9 @@ test $THEME-build-1 "build foo" -body {
 test $THEME-after-build-1 "after build foo" -body {
     
     set result []
-    foreach vn {::foo ::b2 ::baz} {lappend result $vn [set $vn]}
+    foreach vn {::foo ::b2 ::baz} {
+        lappend result $vn [dep worker call set $vn]
+    }
     set result
 
 } -result {::foo FOO ::b2 BAR ::baz BAZ}

@@ -27,22 +27,15 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     variable myDeps [dict create]
     method varName varName {myvar $varName}
 
-    # constructor args {
-    #     puts "Constructor for $self is called"
-    #     $self configurelist $args
-    #     trace add variable [myvar myDeps] write [list apply {{self args} {
-    #         puts "myDeps for $self is updated. $args"
-    #     }} $self]
-    #     trace add variable [myvar myDeps] unset [list apply {{self args} {
-    #         puts "myDeps for $self is UNSET $args"
-    #     }} $self]
-    # }
-
     variable myMethods [dict create]
     variable myProcs [dict create]
 
     method dir {} {$self directory}
     method directory {} { file dirname $options(-file) }
+
+    typemethod {instance namespaces} {} {
+        return [namespace children $type Snit_inst*]
+    }
 
     method {runtime typename} {} { return ${selfns}::runtime }
     method {runtime instance} {} { return ${selfns}::instance }

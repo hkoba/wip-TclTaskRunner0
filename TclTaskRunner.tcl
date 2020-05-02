@@ -15,6 +15,7 @@ source $::TclTaskRunner::libDir/iomacro.tcl
 source $::TclTaskRunner::libDir/typemacro.tcl
 source $::TclTaskRunner::libDir/logmacro.tcl
 source $::TclTaskRunner::libDir/tasksetdef.tcl
+source $::TclTaskRunner::libDir/workermacro.tcl
 
 snit::type TclTaskRunner {
     component myTaskSetRegistry -public registry
@@ -24,14 +25,21 @@ snit::type TclTaskRunner {
     option -dry-run no
     ::TclTaskRunner::use_logging
 
+    ::TclTaskRunner::use_worker
+
     option -report-command []
+
+    typevariable ourTaskSetType TaskSetDefinition
 
     constructor args {
         install myTaskSetRegistry using TaskSetRegistry $self.registry
         $self configurelist $args
         install myBuilder using TaskSetBuilder $self.builder \
             -toplevel $self -registry $myTaskSetRegistry \
+            -task-set-type $ourTaskSetType \
             -debug $options(-debug)
+        
+        $self worker init
     }
 
     method use scriptFileName {
@@ -102,9 +110,12 @@ snit::type TclTaskRunner {
     }
 
     method runner args {
+        $self worker sync
+
         RunContext $self.runner.%AUTO% {*}$args \
             -quiet $options(-quiet) \
             -dry-run $options(-dry-run) \
+            -worker $myWorker \
             -debug $options(-debug) \
             -registry $myTaskSetRegistry -toplevel $self
     }
@@ -114,6 +125,7 @@ source $TclTaskRunner::libDir/builder.tcl
 source $TclTaskRunner::libDir/context.tcl
 source $TclTaskRunner::libDir/registry.tcl
 source $TclTaskRunner::libDir/termcolor.tcl
+source $TclTaskRunner::libDir/namespace-util.tcl
 
 snit::method TclTaskRunner usage args {
     return "Usage: [file tail $TclTaskRunner::scriptFn] ?main.tcltask?"

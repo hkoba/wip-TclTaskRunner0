@@ -65,6 +65,7 @@ test $THEME-before-build-1 "before build foo" -body {
 
 test $THEME-build-1 "build foo" -body {
     
+    dep worker steal puts
     [dep runner] run [dep registry get @foo]
 
 } -output "varA=BBB CCC\n"
@@ -72,7 +73,9 @@ test $THEME-build-1 "build foo" -body {
 test $THEME-after-build-1 "build foo" -body {
     
     set result []
-    foreach vn {::varA ::varB ::varC} {lappend result $vn [set $vn]}
+    foreach vn {::varA ::varB ::varC} {
+        lappend result $vn [dep worker call set $vn]
+    }
     set result
 
 } -result {::varA {BBB CCC} ::varB BBB ::varC CCC}
@@ -105,7 +108,9 @@ test $THEME-build-2 "build bar" -body {
     dep run @bar
 
     set result []
-    foreach vn {::varX ::varY ::varZ} {lappend result $vn [set $vn]}
+    foreach vn {::varX ::varY ::varZ} {
+        lappend result $vn [dep worker call set $vn]
+    }
     set result
 
 } -result {::varX {YYY ZZZ} ::varY YYY ::varZ ZZZ}

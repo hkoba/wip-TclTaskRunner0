@@ -29,6 +29,12 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     option -registry ""
     option -popd-after-load no
 
+    variable myTaskSetType TaskSetDefinition
+    option -task-set-type
+    onconfigure -task-set-type typ {
+        set myTaskSetType $typ
+    }
+
     onconfigure -registry root {
         install myRegistry using set root
     }
@@ -120,15 +126,13 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         set targetName
     }
     
-    typevariable ourTaskSetType TaskSetDefinition
-
     #
     # Keyword dictionary of target definition.
     #
     method {precheck target} {def targetName args} {
         set dict [dict create]
         foreach {name value} $args {
-            if {![$ourTaskSetType knownKey $name]} {
+            if {![$myTaskSetType knownKey $name]} {
                 error "Unknown item '$name' in target '$targetName' \
                 file '[$def cget -file]'"
             }
@@ -197,7 +201,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         $self dputs $depth define $name -file $fn
 
         $myRegistry add $name \
-            [set def [$ourTaskSetType $myRegistry.$name \
+            [set def [$myTaskSetType $myRegistry.$name \
                           -name $name -file $fn \
                           -depth $depth \
                           {*}$args]]

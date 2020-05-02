@@ -27,12 +27,33 @@ snit::type ::TclTaskRunner::RunContext {
 
     method {worker init} {} {
         if {$myWorker eq ""} {
-            install myWorker using list interp eval {}
+            if {$options(-isolate)} {
+                install myWorker using list [interp create $self.worker] eval
+            } else {
+                install myWorker using list interp eval {}
+            }
+        }
+        
+        {*}$myWorker [list namespace eval :: [list package require snit]]
+
+        $self worker sync
+    }
+
+    method {worker eval} args {
+        {*}$myWorker $args
+    }
+
+    method {worker sync} {} {
+        if {[{*}$myWorker [list info commands ::TclTaskRunner]] eq ""} {
+            set script [TclTaskRunner::ns-definition ::TclTaskRunner]
+            # puts [list \# sync script $script]
+            {*}$myWorker $script
         }
     }
 
     method run {scope {targetOrMethod ""} args} {
-        if {[info commands $scope] eq "" && [regexp ^@ $scope] && $options(-registry) ne ""} {
+        if {[info commands $scope] eq "" && [regexp ^@ $scope]
+            && $options(-registry) ne ""} {
             set scope [$options(-registry) get $scope]
         }
         if {$targetOrMethod eq ""} {
@@ -86,7 +107,8 @@ snit::type ::TclTaskRunner::RunContext {
         set depends [$scope target depends $target]
         $self dputs $depth scope $scope target $target deps $depends
         if {$options(-debug) >= 3} {
-            $self dputs $depth [$scope varName myDeps] [set [$scope varName myDeps]]
+            $self dputs $depth [$scope varName myDeps] \
+                [set [$scope varName myDeps]]
         }
 
         set thisMtime [$self mtime $targetTuple $depth]
@@ -105,7 +127,8 @@ snit::type ::TclTaskRunner::RunContext {
                 $self dputs $depth pred is not changed but infinitely old: $pred
                 lappend changed $pred
             } else {
-                $self dputs $depth Not changed $pred mtime $predMtime $targetTuple $thisMtime
+                $self dputs $depth Not changed $pred \
+                    mtime $predMtime $targetTuple $thisMtime
             }
         }
         
@@ -166,7 +189,8 @@ snit::type ::TclTaskRunner::RunContext {
             $self dputs $depth No $scriptType script for $targetTuple
             return
         }
-        $self dputs $depth running $scriptType script for $targetTuple = [string trim $script]
+        $self dputs $depth running $scriptType script\
+            for $targetTuple = [string trim $script]
 
         set resList [$self worker subst-apply-to $scope $target $depth $script]
         
@@ -180,7 +204,8 @@ snit::type ::TclTaskRunner::RunContext {
                 set myMtime($targetTuple) \
                     [set mtime [expr {[clock microseconds]/1000000.0}]]
 
-                $self dputs $depth target mtime is updated: $targetTuple mtime $mtime
+                $self dputs $depth target mtime is updated: \
+                    $targetTuple mtime $mtime
             }
         }
         
@@ -202,7 +227,8 @@ snit::type ::TclTaskRunner::RunContext {
         set subst [$scope target subst $target $script]
 
         if {$options(-quiet)} {
-            $self dputs $depth running $scriptType script for $targetTuple = [string trim $subst]
+            $self dputs $depth running $scriptType script \
+                for $targetTuple = [string trim $subst]
         } else {
             puts $options(-log-fh) "$options(-log-prefix)[string trim $subst]"
         }
@@ -214,15 +240,18 @@ snit::type ::TclTaskRunner::RunContext {
 
             set myState($targetTuple,$scriptType) $resList
             
-            if {![is-ok-or [set postCheckRes [$self target try check $targetTuple $depth]] yes]} {
+            set postCheckRes [$self target try check $targetTuple $depth]
+            if {![is-ok-or $postCheckRes yes]} {
                 
-                if {[set diag [string trim [$scope target diag $target]]] ne ""} {
+                if {[set diag [string trim [$scope target diag $target]]]
+                    ne ""} {
                     $self target diag $target \
                         [$scope target subst $target $diag] \
                         $postCheckRes
 
                 } else {
-                    error "postcheck failed after action $targetTuple - postCheck=$postCheck"
+                    error "postcheck failed after action $targetTuple\
+                     - postCheck=$postCheck"
                 }
             }
         }

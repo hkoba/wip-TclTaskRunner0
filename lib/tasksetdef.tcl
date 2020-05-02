@@ -86,7 +86,8 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         list $vars $vals
     }
 
-    # Below defines [$scope target check $targetName],  [$scope target action $targetName] and so on.
+    # Below defines [$scope target check $targetName],
+    # [$scope target action $targetName] and so on.
     foreach key $knownKeys {
         method [list target $key] name [string map [list @KEY@ $key ] {
             dict-default [dict get $myDeps $name] @KEY@ []
@@ -123,7 +124,9 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     }
 
     variable myImportList []
-    method {import add} {pattern fromFile} { lappend myImportList [list $pattern $fromFile] }
+    method {import add} {pattern fromFile} {
+        lappend myImportList [list $pattern $fromFile]
+    }
     method {import list} {} {set myImportList}
 
     variable myMisc [dict create method [] proc []]

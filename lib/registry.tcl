@@ -50,7 +50,8 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
         set ts [dict get $myDict $file]
         set actual [if {[default target ""] eq ""} {
             if {[set str [$ts cget -default]] eq ""} {
-                error "Can't resolve refSpec '$refSpec'. No default target in taskset [$ts cget -name]"
+                error "Can't resolve refSpec '$refSpec'. \
+                No default target in taskset [$ts cget -name]"
             }
             set str
         } elseif {[$ts target exists $target]} {
@@ -66,7 +67,8 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
     }
 
     method relative-name file {
-        set fullFn [file rootname [fileutil::lexnormalize [file normalize $file]]]
+        set fullFn [file rootname \
+                        [fileutil::lexnormalize [file normalize $file]]]
         set relFn [if {$options(-root-dir) eq ""} {
             set options(-root-dir) [file dirname $fullFn]/
             file tail $fullFn
@@ -74,7 +76,8 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
                       $options(-root-dir) $fullFn]} {
             string range $fullFn [string length $options(-root-dir)] end
         } else {
-            error "Can't add a file from outside of -root-dir $options(-root-dir): $fullFn, orig=$file"
+            error "Can't add a file from outside of\
+             -root-dir $options(-root-dir): $fullFn, orig=$file"
         }]
 
         return @[string map {/ ::} $relFn]

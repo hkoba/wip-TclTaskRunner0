@@ -47,7 +47,9 @@ snit::type TclTaskRunner {
     method verify args {
         foreach path $args {
             if {[file isdirectory $path]} {
-                $self verify {*}[lsort -dictionary [glob -nocomplain -directory $path *.tcltask]]
+                $self verify {*}[lsort -dictionary \
+                                     [glob -nocomplain \
+                                          -directory $path *.tcltask]]
                 
             } elseif {![file exists $path]} {
                 $self verify {*}[lsort -dictionary [glob -nocomplain $path]]

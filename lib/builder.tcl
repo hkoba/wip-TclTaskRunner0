@@ -78,7 +78,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         upvar 1 $varName def
         set asName [from args as ""]
         if {![$myRegistry parse-use-spec $name rootName]} {
-            error "Bad argument for \[use\] statement. '$name' should be either @xxx or xxx.tcltask"
+            error "Bad argument for \[use\] statement. \
+            '$name' should be either @xxx or xxx.tcltask"
         }
         set extName @$rootName
         set subdef [$self taskset ensure-loaded \
@@ -90,7 +91,9 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     method {declare import} {varName what _from fromFn} {
         upvar 1 $varName def
-        if {$_from ne "from"} {error "Only \[import pattern from file] is supported"}
+        if {$_from ne "from"} {
+            error "Only \[import pattern from file] is supported"
+        }
         $def import add $what $fromFn
     }
 
@@ -126,10 +129,12 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         set dict [dict create]
         foreach {name value} $args {
             if {![$ourTaskSetType knownKey $name]} {
-                error "Unknown item '$name' in target '$targetName' file '[$def cget -file]'"
+                error "Unknown item '$name' in target '$targetName' \
+                file '[$def cget -file]'"
             }
             if {[dict exists $dict $name]} {
-                error "Duplicate item '$name' in target '$targetName' file '[$def cget -file]'"
+                error "Duplicate item '$name' in target '$targetName' \
+                file '[$def cget -file]'"
             }
             dict set dict $name $value
         }
@@ -248,7 +253,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                         $extScope target spec $extTarget
                     } else {
                         if {$options(-debug) >= 3} {
-                            $self dputs $depth depTask $depTask is foreign for $def
+                            $self dputs $depth depTask $depTask is foreign \
+                                for $def
                         }
                         $myRegistry resolve-spec $depTask [$def cget -name]
                     }

@@ -48,7 +48,9 @@ test $THEME-load "load main.tcltask (loads total 3 tcltask files)" {
 test $THEME-before-build-1 "before build foo" -body {
     
     set result []
-    foreach vn {::foo ::b2 ::baz} {lappend result $vn [info exists $vn]}
+    foreach vn {::foo ::b2 ::baz} {
+        lappend result $vn [dep worker call info exists $vn]
+    }
     set result
 
 } -result {::foo 0 ::b2 0 ::baz 0}

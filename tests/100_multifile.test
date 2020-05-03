@@ -60,7 +60,9 @@ test $THEME-load "load *.tcltask" {
 test $THEME-before-build-1 "before build foo" -body {
     
     set result []
-    foreach vn {::varA ::varB ::varC} {lappend result $vn [info exists $vn]}
+    foreach vn {::varA ::varB ::varC} {
+        lappend result $vn [dep worker call info exists $vn]
+    }
     set result
 
 } -result {::varA 0 ::varB 0 ::varC 0}
@@ -99,7 +101,9 @@ test $THEME-after-build-1 "foo target list" -body {
 test $THEME-before-build-2 "before build bar" -body {
     
     set result []
-    foreach vn {::varX ::varY ::varZ} {lappend result $vn [info exists $vn]}
+    foreach vn {::varX ::varY ::varZ} {
+        lappend result $vn [dep worker call info exists $vn]
+    }
     set result
 
 } -result {::varX 0 ::varY 0 ::varZ 0}

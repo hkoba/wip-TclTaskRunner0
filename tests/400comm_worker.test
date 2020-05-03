@@ -1,0 +1,86 @@
+#!/usr/bin/env tclsh
+
+package require fileutil
+
+package require tcltest
+namespace import tcltest::*
+
+set testScript [file normalize [info script]]
+set testDir    [file rootname $testScript]
+set runnerFn   [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
+
+#========================================
+
+set THEME comm-worker
+
+test load "Make sure TclTaskRunner.tcl is loadable." {
+    source $runnerFn
+} ""
+
+#----------------------------------------
+
+test $THEME-has-comm "Make sure comm is loadable." {
+    package require comm
+    list
+} ""
+
+proc open_comm_kid {} {
+    set kidChan [open |[info nameofexecutable] w+]
+    fconfigure $kidChan -buffering line
+    puts $kidChan [string trim {
+        package require comm
+        puts [::comm::comm self]
+        vwait forever
+    }]
+    flush $kidChan
+    list [gets $kidChan] $kidChan
+}
+
+set kidID ""
+test $THEME-has-kid "Start child comm process" -body {
+    lassign [open_comm_kid] kidID kidChan
+    # puts [list kidID $kidID]
+    expr {[comm::comm send $kidID pid] == [pid $kidChan]}
+} -result 1
+
+set C 0
+
+test $THEME-comm-[incr C] "construct with -worker" -body {
+    
+    set debug [TclTaskRunner::default ::env(DEBUG) 0]
+    TclTaskRunner dep -debug $debug -quiet [expr {! $debug}] \
+        -worker [list comm::comm send $kidID];
+
+} -result ::dep
+    
+cd /
+
+test $THEME-load "load main.tcltask (loads total 3 tcltask files)" {
+    
+    dep use $testDir/main.tcltask
+    
+    dict size [dep registry all]
+    
+} 1
+
+test $THEME-basic-[incr C] "target update" {
+
+    dep run @main
+    
+    comm::comm send $kidID set varZ
+
+} 11
+
+test $THEME-method-[incr C] "snit method" {
+    
+    dep run @main foobar x 3 y 8
+
+} -result {FOOBAR {x 3 y 8}}
+
+test $THEME-snit-[incr C] "snit type and instance method migration" {
+    
+    dep run @main ensure-varA
+
+    list [comm::comm send $kidID info exists ::varA] \
+        [info exists ::varA]
+} [list 1 0]

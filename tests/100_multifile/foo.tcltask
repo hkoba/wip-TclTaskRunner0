@@ -20,6 +20,22 @@ public target taskC check {
     set ::varC CCC
 }
 
+target taskD check {
+    info exists ::varD
+} action {
+    set ::varD DDD
+}
+
+target taskE check {
+    $self check-E
+} action {
+    set ::varE EEE
+}
+
+method check-E {} {
+    info exists ::varE
+}
+
 method xxx {a b} {
     expr {$a + $b}
 }

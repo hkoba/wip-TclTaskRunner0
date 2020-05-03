@@ -42,11 +42,11 @@ snit::type ::TclTaskRunner::RunContext {
                 $self dputs 0 running $scope target $targetOrMethod
             }
             # XXX: TODO: worker support
-            set result [$scope runtime invoke $targetOrMethod {*}$args]
+            set result [$scope runtime invoke {*}$targetOrMethod {*}$args]
             if {!$options(-quiet)} {
                 puts $options(-log-fh) $result
             }
-            
+            set result
         } else {
             error "No such target/method in $scope: $targetOrMethod"
         }

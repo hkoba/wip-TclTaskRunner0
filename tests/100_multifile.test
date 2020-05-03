@@ -85,17 +85,19 @@ test $THEME-after-build-1 "build foo" -body {
 } -result {::varA {BBB CCC} ::varB BBB ::varC CCC}
 
 
-test $THEME-after-build-1 "foo xxx 3 8" -body {
+test $THEME-after-build-1 "@foo invoke method xxx 3 8" -body {
     
-    [[dep registry get @foo] runtime instance] xxx 3 8
+    dep run @foo xxx 3 8
 
 } -result 11
 
 test $THEME-after-build-1 "foo target list" -body {
     
-    [[dep registry get @foo] runtime instance] target list
+    # Multiword method name must be given as a list.
 
-} -result {taskA taskB taskC}
+    dep run @foo {target list}
+
+} -result {taskA taskB taskC taskD taskE}
 
 
 test $THEME-before-build-2 "before build bar" -body {
@@ -110,7 +112,7 @@ test $THEME-before-build-2 "before build bar" -body {
 
 test $THEME-build-2 "build bar" -body {
     
-    # Shorthand form
+    # Shorthand form of [[dep runner] run $target]
     dep run @bar
 
     set result []
@@ -121,3 +123,19 @@ test $THEME-build-2 "build bar" -body {
 
 } -result {::varX {YYY ZZZ} ::varY YYY ::varZ ZZZ}
 
+test $THEME-explicit-target "explicit target invocation" -body {
+    
+    dep run @foo taskD
+    
+    dep worker call set ::varD
+
+} -result DDD
+
+
+test $THEME-explicit-target "explicit target which calls own method" -body {
+    
+    dep run @foo taskE
+    
+    dep worker call set ::varE
+
+} -result EEE

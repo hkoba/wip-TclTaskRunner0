@@ -38,11 +38,17 @@ snit::macro ::TclTaskRunner::use_worker {} {
             {*}$myWorker $script
         } else {
             foreach ns [$ourTaskSetType instance namespaces] {
+                # Definition should be updated always.
                 set script [TclTaskRunner::ns-definition $ns]
                 if {$options(-debug) >= 3} {
-                    puts \#[list sync instance $ns $script]
+                    puts \#[list sync runtime type $ns $script]
                 }
                 {*}$myWorker $script
+                
+                # Instance should be created only if it is missing.
+                if {[{*}$myWorker [list info commands ${ns}::instance]] eq ""} {
+                    {*}$myWorker [list ${ns}::runtime create ${ns}::instance]
+                }
             }
         }
         # puts stderr \#[list runtime has [{*}$myWorker info commands ::TclTaskRunner::TaskSetDefinition::Snit_inst1::instance]]

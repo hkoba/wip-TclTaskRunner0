@@ -21,7 +21,9 @@ test load "Make sure it is loadable." {
 test $THEME-create "create TclTaskRunner instance" {
 
     set debug [TclTaskRunner::default ::env(DEBUG) 0]
-    TclTaskRunner dep -debug $debug -quiet [expr {! $debug}]
+    set single [TclTaskRunner::default ::env(DEBUG_SINGLE_INTERP) 0]
+    TclTaskRunner dep -debug $debug -quiet [expr {! $debug}] \
+        -isolate [expr {! $single}]
 
 } ::dep
 

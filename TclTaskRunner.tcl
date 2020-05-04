@@ -113,7 +113,7 @@ snit::type TclTaskRunner {
         $self worker sync
 
         RunContext $self.runner.%AUTO% {*}$args \
-            -quiet $options(-quiet) \
+            -silent $options(-silent) \
             -dry-run $options(-dry-run) \
             -worker $myWorker \
             -debug $options(-debug) \

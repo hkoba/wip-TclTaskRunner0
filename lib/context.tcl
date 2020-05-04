@@ -38,12 +38,12 @@ snit::type ::TclTaskRunner::RunContext {
             set kind [$scope target kind $target]
             $self update [list $scope $kind $target] 0 {*}$args
         } elseif {[$scope runtime can $targetOrMethod]} {
-            if {$options(-quiet)} {
+            if {$options(-silent)} {
                 $self dputs 0 running $scope target $targetOrMethod
             }
             # XXX: TODO: worker support
             set result [$scope runtime invoke {*}$targetOrMethod {*}$args]
-            if {!$options(-quiet)} {
+            if {!$options(-silent)} {
                 puts $options(-log-fh) $result
             }
             set result
@@ -195,7 +195,7 @@ snit::type ::TclTaskRunner::RunContext {
         
         set subst [$scope target subst $target $script]
 
-        if {$options(-quiet)} {
+        if {$options(-silent)} {
             $self dputs $depth running $scriptType script \
                 for $targetTuple = [string trim $subst]
         } else {

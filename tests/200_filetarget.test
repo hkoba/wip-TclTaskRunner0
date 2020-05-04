@@ -23,7 +23,7 @@ cd /
 
 test $THEME-exec-1 "exec main.tcltask clean" -body {
 
-    exec [info nameofexecutable] $runnerFn --quiet $testDir/main.tcltask clean
+    exec [info nameofexecutable] $runnerFn --silent $testDir/main.tcltask clean
 
     file exists $testDir/prog
 
@@ -42,7 +42,7 @@ test $THEME-exec-2 "exec main.tcltask" -body {
 test $THEME-exec-result "exec main.tcltask" -body {
     set result []
     lappend result [file exists $testDir/prog]
-    exec [info nameofexecutable] $runnerFn --quiet $testDir/main.tcltask clean
+    exec [info nameofexecutable] $runnerFn --silent $testDir/main.tcltask clean
     lappend result [file exists $testDir/prog]
 
 } -result {1 0}
@@ -52,7 +52,7 @@ test $THEME-exec-result "exec main.tcltask" -body {
 test $THEME-create "create TclTaskRunner instance" {
 
     set debug [TclTaskRunner::default ::env(DEBUG) 0]
-    TclTaskRunner dep -debug $debug -quiet [expr {! $debug}]
+    TclTaskRunner dep -debug $debug -silent [expr {! $debug}]
 
 } ::dep
 

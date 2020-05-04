@@ -23,7 +23,7 @@ cd /
 
 test $THEME-exec "exec main.tcltask" -body {
 
-    exec [info nameofexecutable] $runnerFn --quiet $testDir/main.tcltask
+    exec [info nameofexecutable] $runnerFn --silent $testDir/main.tcltask
 
 } -result {FOO BAR BAZ}
 
@@ -32,7 +32,7 @@ test $THEME-exec "exec main.tcltask" -body {
 test $THEME-create "create TclTaskRunner instance" {
 
     set debug [TclTaskRunner::default ::env(DEBUG) 0]
-    TclTaskRunner dep -debug $debug -quiet [expr {! $debug}]
+    TclTaskRunner dep -debug $debug -silent [expr {! $debug}]
 
 } ::dep
 

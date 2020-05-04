@@ -22,7 +22,7 @@ test $THEME-create "create TclTaskRunner instance" {
 
     set debug [TclTaskRunner::default ::env(DEBUG) 0]
     set single [TclTaskRunner::default ::env(DEBUG_SINGLE_INTERP) 0]
-    TclTaskRunner dep -debug $debug -quiet [expr {! $debug}] \
+    TclTaskRunner dep -debug $debug -silent [expr {! $debug}] \
         -isolate [expr {! $single}]
 
 } ::dep
@@ -35,13 +35,13 @@ set ::env(PATH) [file dirname $runnerFn]:$::env(PATH)
 
 test $THEME-exec-1 "exec TclTaskRunner.tcl foo.tcltask" -body {
 
-    exec [info nameofexecutable] $runnerFn --quiet $testDir/foo.tcltask
+    exec [info nameofexecutable] $runnerFn --silent $testDir/foo.tcltask
 
 } -result {varA=BBB CCC}
 
 test $THEME-exec-2 "exec foo.tcltask" -body {
 
-    exec $testDir/foo.tcltask --quiet
+    exec $testDir/foo.tcltask --silent
 
 } -result {varA=BBB CCC}
 

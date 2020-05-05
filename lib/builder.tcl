@@ -278,7 +278,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         }
     }
 
-    method {taskset compile} {def args} {
+    method {taskset genscript} {def args} {
         set depth [from args -depth 0]
 
         set script [__EXPAND $ourTypeTemplate \
@@ -300,13 +300,20 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                     }} $gotNS {*}$pattern]]\n
             }
         }
-
+        
         if {$options(-debug) >= 2} {
             $self dputs $depth =======
             $self dputs $depth runtime type:
             $self dputs $depth [string trim $script]
             $self dputs $depth =======
         }
+        
+        set script
+    }
+
+    method {taskset compile} {def args} {
+
+        set script [$self taskset genscript $def {*}$args]
 
         uplevel #0 $script
 

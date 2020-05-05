@@ -7,18 +7,13 @@ snit::macro ::TclTaskRunner::use_worker {} {
     option -isolate yes
 
     variable myWorker ""
-    option -worker
-    onconfigure -worker worker {
-        install myWorker using set worker
-    }
-
+    variable myInterp ""
     method {worker init} {} {
-        if {$myWorker eq ""} {
-            if {$options(-isolate)} {
-                install myWorker using list [interp create $self.worker] eval
-            } else {
-                install myWorker using list interp eval {}
-            }
+        if {$options(-isolate)} {
+            install myInterp using interp create $self.worker
+            install myWorker using list $myInterp eval
+        } else {
+            install myWorker using list interp eval $myInterp
         }
     }
     
@@ -51,7 +46,6 @@ snit::macro ::TclTaskRunner::use_worker {} {
                 }
             }
         }
-        # puts stderr \#[list runtime has [{*}$myWorker info commands ::TclTaskRunner::TaskSetDefinition::Snit_inst1::instance]]
     }
 
     method {worker steal} {cmd args} {

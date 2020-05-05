@@ -41,9 +41,9 @@ snit::type ::TclTaskRunner::RunContext {
             if {$options(-silent)} {
                 $self dputs 0 running $scope target $targetOrMethod
             }
-            # XXX: TODO: worker support
-            set result [$scope runtime invoke {*}$targetOrMethod {*}$args]
-            if {!$options(-silent)} {
+            set result [{*}$myWorker [$scope runtime lambda\
+                                          {*}$targetOrMethod {*}$args]]
+            if {!$options(-silent) && $result ne ""} {
                 puts $options(-log-fh) $result
             }
             set result
@@ -195,33 +195,27 @@ snit::type ::TclTaskRunner::RunContext {
         
         set subst [$scope target subst $target $script]
 
-        if {$options(-silent)} {
-            $self dputs $depth running $scriptType script \
-                for $targetTuple = [string trim $subst]
-        } else {
-            puts $options(-log-fh) "$options(-log-prefix)[string trim $subst]"
-        }
-
-        if {!$options(-dry-run)} {
-            set resList [$self worker apply-to $scope $target $depth $subst]
+        set resList [$self worker apply-to $scope $target $depth $subst]
             
-            $self dputs $depth ==> $resList
+        $self dputs $depth ==> $resList
 
-            set myState($targetTuple,$scriptType) $resList
+        set myState($targetTuple,$scriptType) $resList
             
-            set postCheckRes [$self target try check $targetTuple $depth]
-            if {![is-ok-or $postCheckRes yes]} {
+        set postCheckRes [$self target try check $targetTuple $depth]
+        if {![is-ok-or $postCheckRes yes]} {
                 
-                if {[set diag [string trim [$scope target diag $target]]]
-                    ne ""} {
-                    $self target diag $target \
-                        [$scope target subst $target $diag] \
-                        $postCheckRes
+            if {$options(-dry-run)} {
+                # postcheck usually fail when dry-run mode.
 
-                } else {
-                    error "postcheck failed after action $targetTuple\
-                     - postCheck=$postCheck"
-                }
+            } elseif {[set diag [string trim [$scope target diag $target]]]
+                      ne ""} {
+                $self target diag $target \
+                    [$scope target subst $target $diag] \
+                    $postCheckRes
+                
+            } else {
+                error "postcheck failed after action $targetTuple\
+                           - postCheck=$postCheck"
             }
         }
         

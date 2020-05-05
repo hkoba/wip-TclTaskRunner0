@@ -46,6 +46,11 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     method {runtime invoke} args {
         ${selfns}::instance {*}$args
     }
+    method {runtime lambda} args {
+        set targetNS [$self runtime typename]
+        list apply [list {self args} {$self {*}$args} $targetNS] \
+            [$self runtime instance] {*}$args
+    }
 
     method dump {} {
         list deps $myDeps methods $myMethods procs $myProcs extern $myExtern

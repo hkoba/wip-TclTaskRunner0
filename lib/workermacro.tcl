@@ -6,6 +6,8 @@ package require snit
 snit::macro ::TclTaskRunner::use_worker {} {
     option -isolate yes
 
+    option -dry-run-marker **
+
     variable myWorker ""
     variable myInterp ""
     method {worker init} {} {
@@ -37,22 +39,36 @@ snit::macro ::TclTaskRunner::use_worker {} {
                 set script [TclTaskRunner::ns-definition $ns]
                 if {$options(-debug) >= 3} {
                     puts \#[list sync runtime type $ns $script]
+                } elseif {$options(-debug) >= 1} {
+                    puts \#[list sync runtime type $ns]
                 }
                 {*}$myWorker $script
-                
-                # Instance should be created only if it is missing.
-                if {[{*}$myWorker [list info commands ${ns}::instance]] eq ""} {
-                    {*}$myWorker [list ${ns}::runtime create ${ns}::instance]
-                }
             }
         }
+        
+        foreach ns [$ourTaskSetType instance namespaces] {
+            # Instance should be created only if it is missing.
+            if {[{*}$myWorker [list info commands ${ns}::instance]] eq ""} {
+                {*}$myWorker [list ${ns}::runtime create ${ns}::instance]
+            }
+        }
+
+        interp alias $myInterp $options(-dry-run-marker) \
+            {} $self worker traced
+    }
+
+    method {worker traced} args {
+        if {! $options(-silent)} {
+            puts $options(-log-fh) $args
+        }
+        if {$options(-dry-run)} return
+        interp eval $myInterp $args
     }
 
     method {worker steal} {cmd args} {
         if {$options(-isolate)} {
-            lassign $myWorker interp
             foreach cmd [list $cmd {*}$args] {
-                $interp alias puts puts
+                $myInterp alias puts puts
             }
         }
     }

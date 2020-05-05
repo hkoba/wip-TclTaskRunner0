@@ -23,7 +23,8 @@ cd /
 
 test $THEME-exec-1 "exec main.tcltask clean" -body {
 
-    exec [info nameofexecutable] $runnerFn --silent $testDir/main.tcltask clean
+    exec [info nameofexecutable] $runnerFn \
+        $testDir/main.tcltask clean
 
     file exists $testDir/prog
 
@@ -33,11 +34,11 @@ test $THEME-exec-2 "exec main.tcltask" -body {
 
     exec [info nameofexecutable] $runnerFn $testDir/main.tcltask
 
-} -result "# cc -c main.c -o main.o
-# cc -c a.c -o a.o
-# cc -c b.c -o b.o
-# cc -c c.c -o c.o
-# cc main.o a.o b.o c.o -o prog"
+} -result "cc -c main.c -o main.o
+cc -c a.c -o a.o
+cc -c b.c -o b.o
+cc -c c.c -o c.o
+cc main.o a.o b.o c.o -o prog"
 
 test $THEME-exec-result "exec main.tcltask" -body {
     set result []

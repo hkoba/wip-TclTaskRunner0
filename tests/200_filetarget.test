@@ -89,3 +89,5 @@ test $THEME-run "run main clean removes prog" -body {
     file exists $testDir/prog
 
 } -result 0
+
+cleanupTests

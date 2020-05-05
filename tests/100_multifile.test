@@ -139,3 +139,5 @@ test $THEME-explicit-target "explicit target which calls own method" -body {
     dep worker call set ::varE
 
 } -result EEE
+
+cleanupTests

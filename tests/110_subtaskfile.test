@@ -71,3 +71,4 @@ test $THEME-after-build-1 "after build foo" -body {
 
 } -result {::foo FOO ::b2 BAR ::baz BAZ}
 
+cleanupTests

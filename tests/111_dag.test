@@ -44,3 +44,4 @@ test $THEME-load "load main.tcltask (loads total 4 tcltask files)" {
     
 } 4
 
+cleanupTests

@@ -70,6 +70,9 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         
         interp alias $myInterp var \
             {} $self var add $varName
+        interp alias $myInterp variable \
+            {} $self misc add variable $varName
+
         interp alias $myInterp method \
             {} $self misc add method $varName
         interp alias $myInterp proc \
@@ -294,12 +297,13 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     method {taskset genscript} {def args} {
         set depth [from args -depth 0]
 
-        set script [__EXPAND $ourTypeTemplate \
+        set script [__EXPAND [string trimleft $ourTypeTemplate] \
                         %TYPENAME% [$def runtime typename] \
                         %METHODS% [join [$def misc get method] \n] \
                         %PROCS% [join [$def misc get proc] \n] \
                         %DEPS% [$def deps] \
                         %VARS% [join [$def misc get var] \n] \
+                        %VARIABLE% [join [$def misc get variable] \n]
                        ]
         
         foreach spec [$def import list] {
@@ -348,6 +352,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             #-----------------------------
 
             variable vars -array {%VARS%}
+            %VARIABLE%
             %METHODS%
             %PROCS%
 

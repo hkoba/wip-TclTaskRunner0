@@ -69,9 +69,9 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             {} $self target-file add $varName
         
         interp alias $myInterp method \
-            {} $self add method $varName
+            {} $self misc add method $varName
         interp alias $myInterp proc \
-            {} $self add proc $varName
+            {} $self misc add proc $varName
 
         interp alias $myInterp use \
             {} $self declare use $varName
@@ -151,7 +151,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         list $kind $dict
     }
 
-    method add {kind varName targetName args} {
+    method {misc add} {kind varName targetName args} {
         upvar 1 $varName def
         # XXX: conflict
         $def misc add $kind $targetName [list $kind $targetName {*}$args]

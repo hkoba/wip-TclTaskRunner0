@@ -68,6 +68,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         interp alias $myInterp FILE \
             {} $self target-file add $varName
         
+        interp alias $myInterp var \
+            {} $self var add $varName
         interp alias $myInterp method \
             {} $self misc add method $varName
         interp alias $myInterp proc \
@@ -149,6 +151,11 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         }]
         
         list $kind $dict
+    }
+
+    method {var add} {defVar varName value} {
+        upvar 1 $defVar def
+        $def misc add var $varName [list $varName $value]
     }
 
     method {misc add} {kind varName targetName args} {
@@ -292,6 +299,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                         %METHODS% [join [$def misc get method] \n] \
                         %PROCS% [join [$def misc get proc] \n] \
                         %DEPS% [$def deps] \
+                        %VARS% [join [$def misc get var] \n] \
                        ]
         
         foreach spec [$def import list] {
@@ -333,10 +341,16 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     typevariable ourTypeTemplate {
         snit::type %TYPENAME% {
-            option -props
+
+            typevariable ourDeps {
+                %DEPS%
+            }
+            #-----------------------------
+
+            variable vars -array {%VARS%}
             %METHODS%
             %PROCS%
-            typevariable ourDeps {%DEPS%}
+
             method selfns {} {return $selfns}
             method {target list} {} {dict keys $ourDeps}
         }

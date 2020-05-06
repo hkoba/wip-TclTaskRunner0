@@ -70,9 +70,11 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         
         interp alias $myInterp var \
             {} $self var add $varName
+
         interp alias $myInterp variable \
             {} $self misc add variable $varName
-
+        interp alias $myInterp option \
+            {} $self misc add option $varName
         interp alias $myInterp method \
             {} $self misc add method $varName
         interp alias $myInterp proc \
@@ -303,7 +305,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                         %PROCS% [join [$def misc get proc] \n] \
                         %DEPS% [$def deps] \
                         %VARS% [join [$def misc get var] \n] \
-                        %VARIABLE% [join [$def misc get variable] \n]
+                        %OPTIONS% [join [$def misc get option] \n] \
+                        %VARIABLES% [join [$def misc get variable] \n]
                        ]
         
         foreach spec [$def import list] {
@@ -352,7 +355,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             #-----------------------------
 
             variable vars -array {%VARS%}
-            %VARIABLE%
+            %OPTIONS%
+            %VARIABLES%
             %METHODS%
             %PROCS%
 

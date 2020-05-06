@@ -183,6 +183,14 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     }
 
     method {taskset define file} {origFn args} {
+        set opts [lassign [$self taskset prepare file $origFn {*}$args] def]
+
+        $self taskset compile $def {*}$opts
+        
+        set def
+    }
+
+    method {taskset prepare file} {origFn args} {
         set depth [from args -depth 0]
 
         set fn [fileutil::lexnormalize [file normalize $origFn]]
@@ -192,29 +200,27 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             error "Conflicting name?? $name"
         }
         
-        if {$options(-popd-after-load)} {
-            pushd_scope prevDir [$myRegistry cget -root-dir]
-        } else {
-            cd [$myRegistry cget -root-dir]
-        }
-
-        $self dputs $depth define $name -file $fn
-
         $myRegistry add $name \
             [set def [$myTaskSetType $myRegistry.$name \
                           -name $name -file $fn \
                           -depth $depth \
                           {*}$args]]
 
+        $self dputs $depth define $name -file $fn
+
         $self taskset populate $def -file $fn -depth $depth
         
-        $self taskset compile $def -depth $depth
-        
-        set def
+        list $def -depth $depth
     }
 
     method {taskset populate} {def args} {
         set depth [from args -depth 0]
+
+        if {$options(-popd-after-load)} {
+            pushd_scope prevDir [$myRegistry cget -root-dir]
+        } else {
+            cd [$myRegistry cget -root-dir]
+        }
 
         $self prepare-context def
         
@@ -338,6 +344,10 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 }
 
 if {![info level] && [info script] eq $::argv0} {
-    ::TclTaskRunner::TaskSetBuilder bld -debug 10
-    puts [bld {*}$::argv]
+    apply {{self} {
+        if {[llength $::argv]} {
+            lassign [$self taskset prepare file {*}$::argv] def
+            puts [$self taskset genscript $def]
+        }
+    }} [::TclTaskRunner::TaskSetBuilder bld -debug 1]
 }

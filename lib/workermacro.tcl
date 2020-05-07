@@ -33,19 +33,15 @@ snit::macro ::TclTaskRunner::use_worker {} {
                 puts \#[list sync type $script]
             }
             {*}$myWorker $script
-        } else {
-            foreach ns [$ourTaskSetType instance namespaces] {
-                # Definition should be updated always.
-                set script [TclTaskRunner::ns-definition $ns]
-                if {$options(-debug) >= 3} {
-                    puts \#[list sync runtime type $ns $script]
-                } elseif {$options(-debug) >= 1} {
-                    puts \#[list sync runtime type $ns]
-                }
-                {*}$myWorker $script
-            }
         }
         
+        foreach def [dict values [$self registry all]] {
+            foreach ns [$def import ns-list] {
+                {*}$myWorker [TclTaskRunner::ns-definition $ns]
+            }
+            {*}$myWorker [list uplevel #0 [$myBuilder taskset genscript $def]]
+        }
+
         foreach ns [$ourTaskSetType instance namespaces] {
             # Instance should be created only if it is missing.
             if {[{*}$myWorker [list info commands ${ns}::instance]] eq ""} {

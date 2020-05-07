@@ -3,6 +3,7 @@
 
 package require snit
 package require fileutil
+package require struct::list
 
 # This type implements $def in TclTaskRunner.tcl
 # and also is called as $scope in RunContext.
@@ -122,10 +123,13 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     }
 
     variable myImportList []
-    method {import add} {pattern fromFile} {
-        lappend myImportList [list $pattern $fromFile]
+    method {import add} {pattern fromFile fileNS} {
+        lappend myImportList [list $pattern $fromFile $fileNS]
     }
     method {import list} {} {set myImportList}
+    method {import ns-list} {} {
+        struct::list mapfor i $myImportList {lindex $i end}
+    }
 
     variable myMisc [dict create method [] proc []]
     method {misc add} {kind name body} {

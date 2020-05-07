@@ -107,7 +107,13 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         if {$_from ne "from"} {
             error "Only \[import pattern from file] is supported"
         }
-        $def import add $what $fromFn
+
+        set gotNS [uplevel #0 [list source $fromFn]]
+        if {$gotNS eq ""} {
+            error "\[import $what from $fromFn\] didn't return namespace"
+        }
+
+        $def import add $what $fromFn $gotNS
     }
 
     method filename-from-extern {rootName baseDef} {
@@ -310,8 +316,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                        ]
         
         foreach spec [$def import list] {
-            lassign $spec pattern fromFile
-            set gotNS [uplevel #0 [list source $fromFile]]
+            lassign $spec pattern fromFile gotNS
             if {$gotNS ne ""} {
                 append script [list namespace eval [$def runtime typename] \
                     [list apply {{ns args} {

@@ -3,6 +3,8 @@
 
 # $self import thisFile
 
+namespace eval utils {
+
 proc lines-of args {
     split [uplevel 1 $args] \n
 }
@@ -287,3 +289,7 @@ proc catch-exec-noerror args {
 }
 
 namespace export *
+
+namespace current
+
+}

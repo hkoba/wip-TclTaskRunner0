@@ -1,7 +1,7 @@
 #!/usr/bin/env TclTaskRunner.tcl
 # -*- coding: utf-8; mode: tcl -*-
 
-source utils.tcl
+import * from utils.tcl
 
 default target disable-selinux check {
 
@@ -21,10 +21,8 @@ default target disable-selinux check {
 
 } action {
     
-    set cmd [list | perl -i /admkit/scripts/ensure-selinux-disabled.pl \
-                 /etc/selinux/config 2>@1]
-
-    read_file $cmd
+    ** exec perl -i /admkit/scripts/ensure-selinux-disabled.pl \
+        /etc/selinux/config 2>@1
 
 } diag {
     You need to reboot this machine to achieve $@

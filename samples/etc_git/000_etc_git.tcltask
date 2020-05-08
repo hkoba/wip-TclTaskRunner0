@@ -1,19 +1,19 @@
 #!/usr/bin/env TclTaskRunner.tcl
 # -*- coding: utf-8; mode: tcl -*-
 
-source utils.tcl
+import * from utils.tcl
 
 default target etc-git dependsTasks /etc/.gitignore check {
     set dn /etc/.git
     expr {[file exists $dn] && [file isdirectory $dn]
           && [file isdirectory $dn/objects]}
 } action {
-    exec git init --shared=0600 /etc
+    ** exec git init --shared=0600 /etc
 }
 
 target /etc/.gitignore dependsFiles {} action {
     puts "target=$target, pwd=[pwd]"
-    write_file $target [unindent {
+    ** write_file $target [unindent {
         /mtab
         /lvm
         /blkid

@@ -5,12 +5,16 @@ use [glob *etc_git.tcltask] as @etc_git
 
 default target commit dependsTasks @etc_git check {
 
+    if {![file isdirectory /etc/.git]} {
+        return no
+    }
+
     set status [exec git --work-tree=/etc --git-dir=/etc/.git status -su]
     
     list [expr {$status eq ""}] status $status
 
 } action {
-    exec git --work-tree=/etc --git-dir=/etc/.git add -A :/
+    ** exec git --work-tree=/etc --git-dir=/etc/.git add -A :/
 
-    exec -ignorestderr git --work-tree=/etc --git-dir=/etc/.git commit -m init
+    ** exec -ignorestderr git --work-tree=/etc --git-dir=/etc/.git commit -m init
 }

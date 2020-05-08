@@ -70,9 +70,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         
         interp alias $myInterp var \
             {} $self var add $varName
-
         interp alias $myInterp variable \
-            {} $self misc add variable $varName
+            {} $self variable add $varName
         interp alias $myInterp option \
             {} $self misc add option $varName
         interp alias $myInterp method \
@@ -167,6 +166,20 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     method {var add} {defVar varName value} {
         upvar 1 $defVar def
         $def misc add var $varName [list $varName $value]
+    }
+
+    method {variable add} {defVar varName args} {
+        upvar 1 $defVar def
+        if {![string is alnum $varName]} {
+            # Do not expose this name to $myInterp
+        } elseif {[llength $args] == 1} {
+            $myInterp eval [list set $varName [lindex $args 0]]
+        } elseif {[llength $args] == 2 && [lindex $args 0] eq "-array"} {
+            $myInterp eval [list array set $varName [lindex $args 1]]
+        } else {
+            error "Invalid variable declaration: $varName $args"
+        }
+        $def misc add variable $varName [list variable $varName {*}$args]
     }
 
     method {misc add} {kind varName targetName args} {

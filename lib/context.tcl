@@ -215,7 +215,7 @@ snit::type ::TclTaskRunner::RunContext {
                 
             } else {
                 error "postcheck failed after action $targetTuple\
-                           - postCheck=$postCheck"
+                           - postCheck=$postCheckRes"
             }
         }
         

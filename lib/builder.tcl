@@ -48,6 +48,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             install myRegistry using TaskSetRegistry $self.registry
         }
         install myInterp using interp create $self.interp
+
+        $myInterp eval {rename proc __proc}
     }
     
     #========================================
@@ -72,12 +74,13 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             {} $self var add $varName
         interp alias $myInterp variable \
             {} $self variable add $varName
+        interp alias $myInterp proc \
+            {} $self proc add $varName
+
         interp alias $myInterp option \
             {} $self misc add option $varName
         interp alias $myInterp method \
             {} $self misc add method $varName
-        interp alias $myInterp proc \
-            {} $self misc add proc $varName
 
         interp alias $myInterp use \
             {} $self declare use $varName
@@ -180,6 +183,12 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             error "Invalid variable declaration: $varName $args"
         }
         $def misc add variable $varName [list variable $varName {*}$args]
+    }
+
+    method {proc add} {defVar procName args} {
+        upvar 1 $defVar def
+        $myInterp eval [list __proc $procName {*}$args]
+        $def misc add proc $procName [list proc $procName {*}$args]
     }
 
     method {misc add} {kind varName targetName args} {

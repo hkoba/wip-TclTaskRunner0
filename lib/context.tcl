@@ -110,6 +110,18 @@ snit::type ::TclTaskRunner::RunContext {
         }
     }
     
+    method {fake mtime} targetTuple {
+        set vn myMtime($targetTuple)
+        if {![info exists $vn]} {
+            $self touch mtime $targetTuple
+        }
+    }
+
+    method {touch mtime} targetTuple {
+        set myMtime($targetTuple) \
+            [expr {[clock microseconds]/1000000.0}]
+    }
+
     method mtime {targetTuple depth} {
         set vn myMtime($targetTuple)
         if {[info exists $vn]} {
@@ -169,8 +181,7 @@ snit::type ::TclTaskRunner::RunContext {
         if {$resList ne ""} {
             set rest [lassign $resList ok]
             if {$ok} {
-                set myMtime($targetTuple) \
-                    [set mtime [expr {[clock microseconds]/1000000.0}]]
+                set mtime [$self touch mtime $targetTuple]
 
                 $self dputs $depth target mtime is updated: \
                     $targetTuple mtime $mtime
@@ -216,6 +227,13 @@ snit::type ::TclTaskRunner::RunContext {
                 error "postcheck failed after action $targetTuple\
                            - postCheck=$postCheckRes"
             }
+        }
+
+        if {$options(-dry-run)
+            && [set mtime [$self fake mtime $targetTuple]] ne ""
+        } {
+            $self dputs $depth target mtime is updated for dry-run: \
+                $targetTuple mtime $mtime
         }
     }
     

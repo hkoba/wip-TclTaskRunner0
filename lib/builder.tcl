@@ -327,28 +327,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     method {taskset genscript} {def args} {
         set depth [from args -depth 0]
 
-        set script [__EXPAND [string trimleft $ourTypeTemplate] \
-                        %TYPENAME% [$def runtime typename] \
-                        %METHODS% [join [$def misc get method] \n] \
-                        %PROCS% [join [$def misc get proc] \n] \
-                        %DEPS% [$def deps] \
-                        %VARS% [join [$def misc get var] \n] \
-                        %OPTIONS% [join [$def misc get option] \n] \
-                        %VARIABLES% [join [$def misc get variable] \n]
-                       ]
-        
-        foreach spec [$def import list] {
-            lassign $spec pattern fromFile gotNS
-            if {$gotNS ne ""} {
-                append script [list namespace eval [$def runtime typename] \
-                    [list apply {{ns args} {
-                        foreach pat $args {
-                            namespace import ${ns}::$pat
-                        }
-                    }} $gotNS {*}$pattern]]\n
-            }
-        }
-        
+        set script [$def genscript]
+
         if {$options(-debug) >= 2} {
             $self dputs $depth =======
             $self dputs $depth runtime type:
@@ -364,32 +344,6 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         set script [$self taskset genscript $def {*}$args]
 
         uplevel #0 $script
-
-        # type を即座に instantiate
-        [$def runtime typename] create [$def runtime instance]
-    }
-    
-    proc __EXPAND {template args} {
-        string map $args $template
-    }
-
-    typevariable ourTypeTemplate {
-        snit::type %TYPENAME% {
-
-            typevariable ourDeps {
-                %DEPS%
-            }
-            #-----------------------------
-
-            variable vars -array {%VARS%}
-            %OPTIONS%
-            %VARIABLES%
-            %METHODS%
-            %PROCS%
-
-            method selfns {} {return $selfns}
-            method {target list} {} {dict keys $ourDeps}
-        }
     }
 }
 

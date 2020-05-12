@@ -42,15 +42,6 @@ snit::macro ::TclTaskRunner::use_worker {} {
             {*}$myWorker [list uplevel #0 [$myBuilder taskset genscript $def]]
         }
 
-        foreach ns [$ourTaskSetType instance namespaces] {
-            # Instance should be created only if it is missing.
-            if {[{*}$myWorker [list info commands ${ns}::instance]] eq ""} {
-                {*}$myWorker [list ${ns}::runtime create ${ns}::instance]
-                {*}$myWorker [list namespace eval ${ns}::runtime::Snit_inst1\
-                                  [list namespace path ${ns}::runtime]]
-            }
-        }
-
         interp alias $myInterp $options(-dry-run-marker) \
             {} $self worker traced
     }

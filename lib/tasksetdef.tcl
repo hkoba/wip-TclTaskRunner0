@@ -163,4 +163,63 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
             \$< [string trim [lindex $depList 0]] \
             \$^ [lrange $depList 0 end]
     }
+
+    typemethod ensure-instance ns {
+        if {[info commands ${ns}::instance] ne ""} return
+        ${ns}::runtime create ${ns}::instance
+        namespace eval ${ns}::runtime::Snit_inst1\
+            [list namespace path ${ns}::runtime]
+        return ${ns}::instance
+    }
+
+    method genscript args {
+        set script [__EXPAND [string trimleft $ourTypeTemplate] \
+                        %TYPENAME% [$self runtime typename] \
+                        %METHODS% [join [$self misc get method] \n] \
+                        %PROCS% [join [$self misc get proc] \n] \
+                        %DEPS% [$self deps] \
+                        %VARS% [join [$self misc get var] \n] \
+                        %OPTIONS% [join [$self misc get option] \n] \
+                        %VARIABLES% [join [$self misc get variable] \n]
+                       ]
+
+        foreach spec [$self import list] {
+            lassign $spec pattern fromFile gotNS
+            if {$gotNS ne ""} {
+                append script [list namespace eval [$self runtime typename] \
+                    [list apply {{ns args} {
+                        foreach pat $args {
+                            namespace import ${ns}::$pat
+                        }
+                    }} $gotNS {*}$pattern]]\n
+            }
+        }
+
+        append script [list $type ensure-instance $selfns]\n
+
+        set script
+    }
+
+    proc __EXPAND {template args} {
+        string map $args $template
+    }
+
+    typevariable ourTypeTemplate {
+        snit::type %TYPENAME% {
+
+            typevariable ourDeps {
+                %DEPS%
+            }
+            #-----------------------------
+
+            variable vars -array {%VARS%}
+            %OPTIONS%
+            %VARIABLES%
+            %METHODS%
+            %PROCS%
+
+            method selfns {} {return $selfns}
+            method {target list} {} {dict keys $ourDeps}
+        }
+    }
 }

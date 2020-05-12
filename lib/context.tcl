@@ -4,7 +4,6 @@
 snit::type ::TclTaskRunner::RunContext {
     variable myWorker ""
     variable myVisited -array []
-    variable myUpdated -array []
     variable myMtime   -array []
     variable myState   -array []
     
@@ -218,8 +217,6 @@ snit::type ::TclTaskRunner::RunContext {
                            - postCheck=$postCheckRes"
             }
         }
-        
-        lappend myUpdated($targetTuple)
     }
     
     method {target diag} {target diag result} {

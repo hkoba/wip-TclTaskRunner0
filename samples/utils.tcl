@@ -272,6 +272,21 @@ proc write_file_raw {fn data args} {
     set fn
 }
 
+proc fh_gather_patterns {fh okPat} {
+	scope_guard fh [list close $fh]
+
+	set okList {}
+	set ngList {}
+	while {[gets $fh line] >= 0} {
+	    if {[regexp $okPat $line]} {
+            lappend okList $line
+	    } else {
+            lappend ngList $line
+	    }
+	}
+	list [expr {$ngList eq ""}] OK $okList NG $ngList
+}
+
 proc scope_guard {varName command} {
     upvar 1 $varName var
     uplevel 1 [list trace add variable $varName unset \

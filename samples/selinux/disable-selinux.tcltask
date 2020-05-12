@@ -27,19 +27,3 @@ default target disable-selinux check {
 } diag {
     You need to reboot this machine to achieve $@
 }
-
-
-method fh_gather_patterns {fh okPat} {
-    scope_guard fh [list close $fh]
-
-    set okList {}
-    set ngList {}
-    while {[gets $fh line] >= 0} {
-        if {[regexp $okPat $line]} {
-            lappend okList $line
-        } else {
-            lappend ngList $line
-        }
-    }
-    list [expr {$ngList eq ""}] OK $okList NG $ngList
-}

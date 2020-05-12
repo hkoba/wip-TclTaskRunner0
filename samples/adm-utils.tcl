@@ -11,6 +11,11 @@ proc check-group {group} {
 }
 
 
+proc query-systemctl {meth args} {
+    set rc [catch {exec systemctl -q $meth {*}$args} result]
+    list [expr {$rc == 0}] result $result
+}
+
 namespace export *
 
 namespace current

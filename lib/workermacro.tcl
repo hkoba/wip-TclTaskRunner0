@@ -46,6 +46,8 @@ snit::macro ::TclTaskRunner::use_worker {} {
             # Instance should be created only if it is missing.
             if {[{*}$myWorker [list info commands ${ns}::instance]] eq ""} {
                 {*}$myWorker [list ${ns}::runtime create ${ns}::instance]
+                {*}$myWorker [list namespace eval ${ns}::runtime::Snit_inst1\
+                                  [list namespace path ${ns}::runtime]]
             }
         }
 

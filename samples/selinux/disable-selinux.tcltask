@@ -3,15 +3,17 @@
 
 import * from utils.tcl
 
+option -script-dir /admkit/scripts
+
 default target disable-selinux check {
 
     set runtime_enabled [expr {![catch {exec selinuxenabled}]}]
 
-    set cmd [list | perl /admkit/scripts/ensure-selinux-disabled.pl \
+    set cmd [list | perl $options(-script-dir)/ensure-selinux-disabled.pl \
                  -q /etc/selinux/config 2>@1]
 
     set config_result \
-        [lassign [$self fh_gather_patterns [open $cmd] {^Already OK}] \
+        [lassign [fh_gather_patterns [open $cmd] {^Already OK}] \
              config_disabled]
 
     list [expr {!$runtime_enabled && $config_disabled}] \
@@ -21,7 +23,7 @@ default target disable-selinux check {
 
 } action {
     
-    ** exec perl -i /admkit/scripts/ensure-selinux-disabled.pl \
+    ** exec perl -i $options(-script-dir)/ensure-selinux-disabled.pl \
         /etc/selinux/config 2>@1
 
 } diag {

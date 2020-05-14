@@ -173,7 +173,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     method {variable add} {defVar varName args} {
         upvar 1 $defVar def
-        if {![string is alnum $varName]} {
+        if {![regexp {^\w+$} $varName]} {
             # Do not expose this name to $myInterp
         } elseif {[llength $args] == 1} {
             $myInterp eval [list set $varName [lindex $args 0]]

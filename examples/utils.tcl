@@ -1,7 +1,7 @@
 #!/usr/bin/tclsh
 # -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
 
-# $self import thisFile
+# import * from utils.tcl
 
 namespace eval utils {
 

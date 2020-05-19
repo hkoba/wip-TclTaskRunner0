@@ -5,9 +5,9 @@ import * from utils.tcl
 
 option -script-dir /admkit/scripts
 
-default target disable-selinux check {
+option -config-only yes
 
-    set runtime_enabled [expr {![catch {exec selinuxenabled}]}]
+default target disable-selinux check {
 
     set cmd [list | perl $options(-script-dir)/ensure-selinux-disabled.pl \
                  -q /etc/selinux/config 2>@1]
@@ -16,10 +16,17 @@ default target disable-selinux check {
         [lassign [fh_gather_patterns [open $cmd] {^Already OK}] \
              config_disabled]
 
-    list [expr {!$runtime_enabled && $config_disabled}] \
-        runtime_enabled $runtime_enabled \
-        config_disabled $config_disabled \
-        {*}$config_result
+    if {$options(-config-only)} {
+        list $config_disabled config_disabled $config_disabled \
+            {*}$config_result
+    } else {
+        set runtime_enabled [expr {![catch {exec selinuxenabled}]}]
+
+        list [expr {!$runtime_enabled && $config_disabled}] \
+            runtime_enabled $runtime_enabled \
+            config_disabled $config_disabled \
+            {*}$config_result
+    }
 
 } action {
     

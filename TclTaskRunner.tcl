@@ -97,7 +97,7 @@ snit::type TclTaskRunner {
         return OK
     }
 
-    method report result {
+    method report {result {exitWith 1}} {
         if {$options(-report-command) ne ""} {
             $options(-report-command) $result
         } else {
@@ -105,6 +105,9 @@ snit::type TclTaskRunner {
                 puts $result
             } else {
                 $type alert $result
+                if {$exitWith ne ""} {
+                    exit $exitWith
+                }
             }
         }
     }

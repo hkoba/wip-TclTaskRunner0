@@ -1,0 +1,41 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- coding: utf-8; mode: tcl -*-
+
+import * from utils.tcl
+import * from file-utils.tcl
+
+set ALL {
+    {040700 {}  /root}
+    {040700 600 /etc/pki/tls/private}
+    {040750 440 /etc/sudoers.d}
+}
+
+foreach spec $ALL {
+    target $spec check {
+        lassign $target dperm fperm dir
+        if {![file exists $dir]} {
+            return [list 0 missing: $dir]
+        }
+        set atts [list -group root -owner root -permissions $dperm]
+        set diff [dict-left-difference [file attributes $dir] \
+                      $atts]
+        list [expr {$diff eq ""}] $diff
+    } action {
+        lassign $target dperm fperm dir
+        set atts [list -group root -owner root -permissions $dperm]
+        ** file attributes $dir {*}$atts
+        
+        if {$fperm ne ""
+            && [set files [glob -nocomplain -dir $dir -type f *]] ne ""} {
+            
+            # XXX:
+            ** exec -ignorestderr chmod -vc $fperm {*}$files \
+                >@ stdout 2>@1
+        
+            ** exec -ignorestderr chown -vc root:root {*}$files \
+                >@ stdout 2>@1
+        }
+    }
+}
+
+default target all dependsTasks $ALL

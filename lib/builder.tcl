@@ -269,11 +269,18 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
         $self prepare-context def
         
-        $myInterp eval [if {[set fn [from args -file ""]] ne ""} {
+        set script [if {[set fn [from args -file ""]] ne ""} {
             $self read_file $fn
         } else {
             from args -script ""
         }]
+
+        $myInterp eval [list apply {{fn script} {
+            set oldScript [info script]
+            info script $fn
+            eval $script
+            info script $oldScript
+        }} $fn $script]
 
         if {$options(-debug) >= 2} {
             $self dputs $depth [$def cget -name] => [$def dump]

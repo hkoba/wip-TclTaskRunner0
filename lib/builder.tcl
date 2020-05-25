@@ -103,6 +103,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                         [+ 1 [$def cget -depth]]]
         $def extern add $extName $subdef \
             [if {$asName ne ""} {$myRegistry parse-use-spec $asName}]
+
+        set extName
     }
 
     method {declare import} {varName what _from fromFn} {

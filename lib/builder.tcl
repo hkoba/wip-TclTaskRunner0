@@ -50,6 +50,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         install myInterp using interp create $self.interp
 
         $myInterp eval {rename proc __proc}
+        $myInterp eval {rename variable __variable}
     }
     
     #========================================
@@ -175,6 +176,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         upvar 1 $defVar def
         if {![regexp {^\w+$} $varName]} {
             # Do not expose this name to $myInterp
+        } elseif {$args eq ""} {
+            $myInterp eval [list __variable $varName]
         } elseif {[llength $args] == 1} {
             $myInterp eval [list set $varName [lindex $args 0]]
         } elseif {[llength $args] == 2 && [lindex $args 0] eq "-array"} {

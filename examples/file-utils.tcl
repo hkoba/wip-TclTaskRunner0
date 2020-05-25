@@ -24,6 +24,25 @@ namespace eval file-utils {
 	list [expr {[llength $diff] == 0}] {*}$diff
     }
     
+    proc check-file-spec {file want} {
+	if {![file exists $file]} {
+	    return 0
+	}
+	set got [file attributes $file]
+	set diff {}
+	foreach k {-owner -group} {
+	    if {![dict exists $want $k]
+		|| [dict get $got $k] eq [dict get $want $k]} continue
+	    lappend diff $k [dict get $want $k]
+	}
+	set k -permissions
+	if {[dict get $got $k] != [dict get $want $k]} {
+	    lappend diff $k [dict get $want $k]
+	}
+
+	list [expr {[llength $diff] == 0}] {*}$diff
+    }
+
     proc apply-dir-spec {dir spec {resVar ""}} {
         if {$resVar ne ""} {
             upvar 1 $resVar res

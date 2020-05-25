@@ -121,6 +121,19 @@ proc file-has {pattern fn args} {
     llength [filelist-having $pattern $fn {*}$args]
 }
 
+proc file-has-exact {wantLine fn args} {
+    foreach fn [linsert $args 0 $fn] {
+        set fh [open $fn]
+        scope_guard fh [list close $fh]
+        for-chan-line line $fh {
+            if {$line eq $wantLine} {
+                return yes
+            }
+        }
+    }
+    return no
+}
+
 proc filelist-having {pattern fn args} {
     set found {}
     foreach fn [linsert $args 0 $fn] {

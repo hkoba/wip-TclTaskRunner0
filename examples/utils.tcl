@@ -152,7 +152,12 @@ proc filelist-having {pattern fn args} {
 proc for-chan-line {lineVar chan command} {
     upvar $lineVar line
     while {[gets $chan line] >= 0} {
-        uplevel 1 $command
+        set rc [catch {uplevel 1 $command} result opts]
+        switch -exact $rc {
+            3 break
+            2 {return -code 2 $result}
+            1 {return -options $opts $result}
+        }
     }
 }
 

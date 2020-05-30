@@ -134,6 +134,11 @@ snit::method TclTaskRunner usage args {
     return "Usage: [file tail $TclTaskRunner::scriptFn] ?main.tcltask?"
 }
 
+snit::typemethod TclTaskRunner parse-opts {argsVar} {
+    upvar 1 $argsVar argv
+    parsePosixOpts argv alias [dict create n dry-run s silent d debug]
+}
+
 snit::typemethod TclTaskRunner oneshot {varName script args} {
     upvar 1 $varName self
     
@@ -150,7 +155,7 @@ snit::typemethod TclTaskRunner oneshot {varName script args} {
 snit::typemethod TclTaskRunner toplevel args {
     set self ::dep
     $type $self -debug [default ::env(DEBUG) 0]\
-        {*}[parsePosixOpts args]\
+        {*}[$type parse-opts args]\
 
     if {[llength $args]} {
         set args [lassign $args taskFile]
@@ -158,7 +163,7 @@ snit::typemethod TclTaskRunner toplevel args {
         set taskFile main.tcltask
     }
 
-    $self configurelist [parsePosixOpts args]
+    $self configurelist [$type parse-opts args]
     
     if {![file exists $taskFile]} {
         puts stderr [$self usage]

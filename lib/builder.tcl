@@ -113,12 +113,26 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             error "Only \[import pattern from file] is supported"
         }
 
-        set gotNS [uplevel #0 [list source $fromFn]]
+        if {[set realScriptFn [$self lookup-upward-from [$def directory] $fromFn]] eq ""} {
+            error "Can't find $fromFn from directory [$def directory]"
+        }
+
+        set gotNS [uplevel #0 [list source $realScriptFn]]
         if {$gotNS eq ""} {
             error "\[import $what from $fromFn\] didn't return namespace"
         }
 
         $def import add $what $fromFn $gotNS
+    }
+
+    method lookup-upward-from {dir fn} {
+        set nameList [file split $dir]
+        for {set i [expr {[llength $nameList] - 1}]} {$i >= 0} {incr i -1} {
+            set absFn [file join {*}[lrange $nameList 0 $i] $fn]
+            if {[file exists $absFn]} {
+                return $absFn
+            }
+        }
     }
 
     method filename-from-extern {rootName baseDef} {

@@ -1,0 +1,274 @@
+
+<!DOCTYPE html><html><head>
+<title>ttr - Tcl Task Runner</title>
+<style type="text/css"><!--
+    HTML {
+	background: 	#FFFFFF;
+	color: 		black;
+    }
+    BODY {
+	background: 	#FFFFFF;
+	color:	 	black;
+    }
+    DIV.doctools {
+	margin-left:	10%;
+	margin-right:	10%;
+    }
+    DIV.doctools H1,DIV.doctools H2 {
+	margin-left:	-5%;
+    }
+    H1, H2, H3, H4 {
+	margin-top: 	1em;
+	font-family:	sans-serif;
+	font-size:	large;
+	color:		#005A9C;
+	background: 	transparent;
+	text-align:		left;
+    }
+    H1.doctools_title {
+	text-align: center;
+    }
+    UL,OL {
+	margin-right: 0em;
+	margin-top: 3pt;
+	margin-bottom: 3pt;
+    }
+    UL LI {
+	list-style: disc;
+    }
+    OL LI {
+	list-style: decimal;
+    }
+    DT {
+	padding-top: 	1ex;
+    }
+    UL.doctools_toc,UL.doctools_toc UL, UL.doctools_toc UL UL {
+	font:		normal 12pt/14pt sans-serif;
+	list-style:	none;
+    }
+    LI.doctools_section, LI.doctools_subsection {
+	list-style: 	none;
+	margin-left: 	0em;
+	text-indent:	0em;
+	padding: 	0em;
+    }
+    PRE {
+	display: 	block;
+	font-family:	monospace;
+	white-space:	pre;
+	margin:		0%;
+	padding-top:	0.5ex;
+	padding-bottom:	0.5ex;
+	padding-left:	1ex;
+	padding-right:	1ex;
+	width:		100%;
+    }
+    PRE.doctools_example {
+	color: 		black;
+	background: 	#f5dcb3;
+	border:		1px solid black;
+    }
+    UL.doctools_requirements LI, UL.doctools_syntax LI {
+	list-style: 	none;
+	margin-left: 	0em;
+	text-indent:	0em;
+	padding:	0em;
+    }
+    DIV.doctools_synopsis {
+	color: 		black;
+	background: 	#80ffff;
+	border:		1px solid black;
+	font-family:	serif;
+	margin-top: 	1em;
+	margin-bottom: 	1em;
+    }
+    UL.doctools_syntax {
+	margin-top: 	1em;
+	border-top:	1px solid black;
+    }
+    UL.doctools_requirements {
+	margin-bottom: 	1em;
+	border-bottom:	1px solid black;
+    }
+--></style>
+</head>
+<!-- Generated from file 'ttr.ja.man' by tcllib/doctools with format 'html'
+   -->
+<!-- Copyright &amp;copy; 2020, by Hiroaki Kobayashi (hkoba)
+   -->
+<!-- ttr.n
+   -->
+<body><div class="doctools">
+<h1 class="doctools_title">ttr(n) 0.1 ttr.ja &quot;Tcl Task Runner&quot;</h1>
+<div id="name" class="doctools_section"><h2><a name="name">Name</a></h2>
+<p>ttr - Tcl Task Runner - Yet another Makefile alternative, based on Tcl</p>
+</div>
+<div id="toc" class="doctools_section"><h2><a name="toc">Table Of Contents</a></h2>
+<ul class="doctools_toc">
+<li class="doctools_section"><a href="#toc">Table Of Contents</a></li>
+<li class="doctools_section"><a href="#synopsis">Synopsis</a></li>
+<li class="doctools_section"><a href="#section1">Description</a></li>
+<li class="doctools_section"><a href="#section2">CLI</a></li>
+<li class="doctools_section"><a href="#section3">Task定義ファイル&quot;<b class="file">*.tcltask</b>&quot;</a>
+<ul>
+<li class="doctools_subsection"><a href="#subsection1">ターゲット定義</a></li>
+<li class="doctools_subsection"><a href="#subsection2">スクリプト内で使用可能な変数</a></li>
+<li class="doctools_subsection"><a href="#subsection3">$self のメソッド</a></li>
+</ul>
+</li>
+<li class="doctools_section"><a href="#see-also">See Also</a></li>
+<li class="doctools_section"><a href="#keywords">Keywords</a></li>
+<li class="doctools_section"><a href="#category">Category</a></li>
+<li class="doctools_section"><a href="#copyright">Copyright</a></li>
+</ul>
+</div>
+<div id="synopsis" class="doctools_section"><h2><a name="synopsis">Synopsis</a></h2>
+<div class="doctools_synopsis">
+<ul class="doctools_syntax">
+<li><a href="#1"><b class="syscmd">TclTaskRunner.tcl</b> <span class="opt">?--option<span class="opt">?=value?</span>...?</span> <span class="opt">?main.tcltask?</span> <span class="opt">?--option=value...?</span> <span class="opt">?target_or_method?</span></a></li>
+<li><a href="#2"><b class="syscmd">./main.tcltask</b> <span class="opt">?--option=value...?</span> <span class="opt">?target_or_method?</span></a></li>
+<li><a href="#3"><span class="opt">?<b class="cmd">default</b>?</span> <b class="cmd">target</b> <i class="arg">name</i> <b class="const">check</b> <i class="arg">checkScript</i> <b class="const">action</b> <i class="arg">actionScript</i> <b class="const">dependsTasks</b> <i class="arg">targetList</i></a></li>
+<li><a href="#4"><b class="const">check</b> <i class="arg">script</i></a></li>
+<li><a href="#5"><b class="const">action</b> <i class="arg">script</i></a></li>
+<li><a href="#6"><b class="const">dependsTasks</b> <i class="arg">targetNameList</i></a></li>
+<li><a href="#7"><b class="const">dependsFiles</b> <i class="arg">FileNameList</i></a></li>
+<li><a href="#8"><b class="cmd">proc</b> <i class="arg">name</i> <i class="arg">arglist</i> <i class="arg">body</i></a></li>
+<li><a href="#9"><b class="method">target list</b></a></li>
+</ul>
+</div>
+</div>
+<div id="section1" class="doctools_section"><h2><a name="section1">Description</a></h2>
+<p>TclTaskRunner.tcl (仮称. 以下 ttr)は Make に似た機能を持ったタスクランナー / ビルドツールです。</p>
+<p>ttr ではタスクを &quot;<b class="file">main.tcltask</b>&quot; ファイルに記述します。</p>
+<pre class="doctools_example">#
+# all という名前でデフォルトのタスクを定義
+#
+default target all dependsTasks {
+   webmaster
+   devel
+}
+#
+# webmaster というタスクは webmaster アカウントの有無を検査して、無ければ作成
+#
+target webmaster check {
+    check-user $target
+} action {
+    ** exec useradd -s /sbin/nologin $target
+}
+#
+# コマンドの前の ** は dry-run 用のマーカー
+#
+# devel というタスクは devel グループの有無を検査して、無ければ作成
+#
+target devel check {
+    check-group $target
+} action {
+    ** exec groupadd $target
+}
+#
+# 以下は下請けの手続き
+#
+proc check-user {user} {...}
+proc check-group {user} {...}
+</pre>
+<p>tcltask ファイルの中身は snit::type へと変換されるので、通常の method, proc, option, variable 定義などを定義して、check や action の中で使うことが出来ます。</p>
+</div>
+<div id="section2" class="doctools_section"><h2><a name="section2">CLI</a></h2>
+<dl class="doctools_definitions">
+<dt><a name="1"><b class="syscmd">TclTaskRunner.tcl</b> <span class="opt">?--option<span class="opt">?=value?</span>...?</span> <span class="opt">?main.tcltask?</span> <span class="opt">?--option=value...?</span> <span class="opt">?target_or_method?</span></a></dt>
+<dd><p>コマンド行からの起動する場合の、引数の与え方です。
+引数省略時はカレントディレクトリ―の &quot;<b class="file">main.tcltask</b>&quot; をタスク定義ファイルとして使用します。
+オプションはタスク定義ファイルの前か後に、<b class="const">--option</b> 又は <b class="const">--option=value</b> 形式で指定します。
+タスク定義ファイルの後には起動したいターゲット名か、メソッド名を渡すことが出来ます。
+（将来的にはタスク定義のオプションや変数オーバーライドも渡せるようにしたいと考えています）</p>
+<dl class="doctools_options">
+<dt><b class="option">-n</b></dt>
+<dd></dd>
+<dt><b class="option">--dry-run</b></dt>
+<dd><p>タスク定義の Action の <b class="cmd">**</b> コマンドを dry-run モードに切り替えます。</p></dd>
+<dt><b class="option">-d</b></dt>
+<dd></dd>
+<dt><b class="option">--debug</b></dt>
+<dd></dd>
+<dt><b class="option">--debug=<i class="arg">integer</i></b></dt>
+<dd><p>デバッグモードで実行します。</p></dd>
+<dt><b class="option">-s</b></dt>
+<dd></dd>
+<dt><b class="option">--silent</b></dt>
+<dd><p><b class="cmd">**</b> コマンドのトレース出力を抑制します。</p></dd>
+</dl></dd>
+<dt><a name="2"><b class="syscmd">./main.tcltask</b> <span class="opt">?--option=value...?</span> <span class="opt">?target_or_method?</span></a></dt>
+<dd><p>Unix 系 OS の場合は tcltask ファイルに実行bit を立て、
+ファイルの先頭に</p>
+<pre class="doctools_example">#!/usr/bin/env TclTaskRunner.tcl</pre>
+<p>という行を
+書けば、 tcltask ファイル自体をコマンドとして使用することも出来ます。</p></dd>
+</dl>
+</div>
+<div id="section3" class="doctools_section"><h2><a name="section3">Task定義ファイル&quot;<b class="file">*.tcltask</b>&quot;</a></h2>
+<p>ttr ではタスク定義ファイルには拡張子 &quot;<b class="file">*.tcltask</b>&quot; を使います。
+ファイルの中身は（定義読み込み専用の tcl interpreter で実行された後に）
+snit の snit::type 定義へと変換されます。</p>
+<div id="subsection1" class="doctools_subsection"><h3><a name="subsection1">ターゲット定義</a></h3>
+<dl class="doctools_definitions">
+<dt><a name="3"><span class="opt">?<b class="cmd">default</b>?</span> <b class="cmd">target</b> <i class="arg">name</i> <b class="const">check</b> <i class="arg">checkScript</i> <b class="const">action</b> <i class="arg">actionScript</i> <b class="const">dependsTasks</b> <i class="arg">targetList</i></a></dt>
+<dd><p><i class="arg">name</i> という名前でターゲット(タスク)を定義します。 
+<b class="cmd">default</b> を付けたターゲットはタスク定義ファイル全体のデフォルトターゲットとなります。
+ターゲットの定義には以下の項目を渡すことが出来ます。</p>
+<dl class="doctools_definitions">
+<dt><a name="4"><b class="const">check</b> <i class="arg">script</i></a></dt>
+<dd><p>ターゲットが既に成立しているか否かを検査するためのスクリプトを書きます。
+成立している場合は Tcl の真 (yes) を返して下さい。</p>
+<pre class="doctools_example">file exists $target</pre>
+<p>デバッグを容易にするため、真理値以外に任意個の key value リストを返すことも出来ます。</p>
+<pre class="doctools_example">set data [read_file $target]
+list [expr {$data eq &quot;foobar&quot;}] data $data
+</pre>
+</dd>
+<dt><a name="5"><b class="const">action</b> <i class="arg">script</i></a></dt>
+<dd><p>ターゲットが未成立な時に実行される Tcl スクリプトを書きます。
+破壊的な変更を行なうコマンドは必ず <b class="cmd">**</b> コマンド経由で呼び出すようにします。
+こうすると、 dry-run モードの時は画面に表示を行なうだけになります。</p>
+<pre class="doctools_example">** exec cat foo &gt; $target</pre>
+<p>bash などのシェルと違って Tcl の場合はリダイレクトも <b class="cmd">exec</b>
+コマンドの引数に過ぎない(exec の中で評価)ので、リダイレクトも安全に dry-run 出来ます。</p></dd>
+<dt><a name="6"><b class="const">dependsTasks</b> <i class="arg">targetNameList</i></a></dt>
+<dd><p>このターゲットが依存するターゲットの名前をリスト形式で渡して下さい。
+リストの構築に不安が有る場合は Tcl 標準の <b class="cmd">list</b> 操作コマンドを
+使って下さい。</p></dd>
+<dt><a name="7"><b class="const">dependsFiles</b> <i class="arg">FileNameList</i></a></dt>
+<dd><p>依存先ターゲットをファイル名で指定したい時はこちらを使って下さい。</p></dd>
+</dl></dd>
+<dt><a name="8"><b class="cmd">proc</b> <i class="arg">name</i> <i class="arg">arglist</i> <i class="arg">body</i></a></dt>
+<dd><p>（ほぼ）通常の Tcl手続きが定義出来ます。</p></dd>
+</dl>
+</div>
+<div id="subsection2" class="doctools_subsection"><h3><a name="subsection2">スクリプト内で使用可能な変数</a></h3>
+<p>ターゲット定義のスクリプトでは以下の変数が使用可能です。</p>
+<dl class="doctools_definitions">
+<dt><b class="variable">$target</b></dt>
+<dd><p>ターゲット名</p></dd>
+<dt><b class="variable">$self</b></dt>
+<dd><p>このタスク定義を表す snit オブジェクト.</p></dd>
+</dl>
+</div>
+<div id="subsection3" class="doctools_subsection"><h3><a name="subsection3">$self のメソッド</a></h3>
+<dl class="doctools_definitions">
+<dt><a name="9"><b class="method">target list</b></a></dt>
+<dd><p>このタスク定義に含まれる、全てのターゲットの名前一覧</p></dd>
+</dl>
+</div>
+</div>
+<div id="see-also" class="doctools_section"><h2><a name="see-also">See Also</a></h2>
+<p>Tcl(n), make(1), snit(n)</p>
+</div>
+<div id="keywords" class="doctools_section"><h2><a name="keywords">Keywords</a></h2>
+<p>Task Runner, make</p>
+</div>
+<div id="category" class="doctools_section"><h2><a name="category">Category</a></h2>
+<p>Programming tools</p>
+</div>
+<div id="copyright" class="doctools_section"><h2><a name="copyright">Copyright</a></h2>
+<p>Copyright &copy; 2020, by Hiroaki Kobayashi (hkoba)</p>
+</div>
+</div></body></html>

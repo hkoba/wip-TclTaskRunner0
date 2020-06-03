@@ -1,0 +1,450 @@
+'\"
+'\" Generated from file 'ttr\&.ja\&.man' by tcllib/doctools with format 'nroff'
+'\" Copyright (c) 2020, by Hiroaki Kobayashi (hkoba)
+'\"
+.TH "ttr" n 0\&.1 ttr\&.ja "Tcl Task Runner"
+.\" The -*- nroff -*- definitions below are for supplemental macros used
+.\" in Tcl/Tk manual entries.
+.\"
+.\" .AP type name in/out ?indent?
+.\"	Start paragraph describing an argument to a library procedure.
+.\"	type is type of argument (int, etc.), in/out is either "in", "out",
+.\"	or "in/out" to describe whether procedure reads or modifies arg,
+.\"	and indent is equivalent to second arg of .IP (shouldn't ever be
+.\"	needed;  use .AS below instead)
+.\"
+.\" .AS ?type? ?name?
+.\"	Give maximum sizes of arguments for setting tab stops.  Type and
+.\"	name are examples of largest possible arguments that will be passed
+.\"	to .AP later.  If args are omitted, default tab stops are used.
+.\"
+.\" .BS
+.\"	Start box enclosure.  From here until next .BE, everything will be
+.\"	enclosed in one large box.
+.\"
+.\" .BE
+.\"	End of box enclosure.
+.\"
+.\" .CS
+.\"	Begin code excerpt.
+.\"
+.\" .CE
+.\"	End code excerpt.
+.\"
+.\" .VS ?version? ?br?
+.\"	Begin vertical sidebar, for use in marking newly-changed parts
+.\"	of man pages.  The first argument is ignored and used for recording
+.\"	the version when the .VS was added, so that the sidebars can be
+.\"	found and removed when they reach a certain age.  If another argument
+.\"	is present, then a line break is forced before starting the sidebar.
+.\"
+.\" .VE
+.\"	End of vertical sidebar.
+.\"
+.\" .DS
+.\"	Begin an indented unfilled display.
+.\"
+.\" .DE
+.\"	End of indented unfilled display.
+.\"
+.\" .SO ?manpage?
+.\"	Start of list of standard options for a Tk widget. The manpage
+.\"	argument defines where to look up the standard options; if
+.\"	omitted, defaults to "options". The options follow on successive
+.\"	lines, in three columns separated by tabs.
+.\"
+.\" .SE
+.\"	End of list of standard options for a Tk widget.
+.\"
+.\" .OP cmdName dbName dbClass
+.\"	Start of description of a specific option.  cmdName gives the
+.\"	option's name as specified in the class command, dbName gives
+.\"	the option's name in the option database, and dbClass gives
+.\"	the option's class in the option database.
+.\"
+.\" .UL arg1 arg2
+.\"	Print arg1 underlined, then print arg2 normally.
+.\"
+.\" .QW arg1 ?arg2?
+.\"	Print arg1 in quotes, then arg2 normally (for trailing punctuation).
+.\"
+.\" .PQ arg1 ?arg2?
+.\"	Print an open parenthesis, arg1 in quotes, then arg2 normally
+.\"	(for trailing punctuation) and then a closing parenthesis.
+.\"
+.\"	# Set up traps and other miscellaneous stuff for Tcl/Tk man pages.
+.if t .wh -1.3i ^B
+.nr ^l \n(.l
+.ad b
+.\"	# Start an argument description
+.de AP
+.ie !"\\$4"" .TP \\$4
+.el \{\
+.   ie !"\\$2"" .TP \\n()Cu
+.   el          .TP 15
+.\}
+.ta \\n()Au \\n()Bu
+.ie !"\\$3"" \{\
+\&\\$1 \\fI\\$2\\fP (\\$3)
+.\".b
+.\}
+.el \{\
+.br
+.ie !"\\$2"" \{\
+\&\\$1	\\fI\\$2\\fP
+.\}
+.el \{\
+\&\\fI\\$1\\fP
+.\}
+.\}
+..
+.\"	# define tabbing values for .AP
+.de AS
+.nr )A 10n
+.if !"\\$1"" .nr )A \\w'\\$1'u+3n
+.nr )B \\n()Au+15n
+.\"
+.if !"\\$2"" .nr )B \\w'\\$2'u+\\n()Au+3n
+.nr )C \\n()Bu+\\w'(in/out)'u+2n
+..
+.AS Tcl_Interp Tcl_CreateInterp in/out
+.\"	# BS - start boxed text
+.\"	# ^y = starting y location
+.\"	# ^b = 1
+.de BS
+.br
+.mk ^y
+.nr ^b 1u
+.if n .nf
+.if n .ti 0
+.if n \l'\\n(.lu\(ul'
+.if n .fi
+..
+.\"	# BE - end boxed text (draw box now)
+.de BE
+.nf
+.ti 0
+.mk ^t
+.ie n \l'\\n(^lu\(ul'
+.el \{\
+.\"	Draw four-sided box normally, but don't draw top of
+.\"	box if the box started on an earlier page.
+.ie !\\n(^b-1 \{\
+\h'-1.5n'\L'|\\n(^yu-1v'\l'\\n(^lu+3n\(ul'\L'\\n(^tu+1v-\\n(^yu'\l'|0u-1.5n\(ul'
+.\}
+.el \}\
+\h'-1.5n'\L'|\\n(^yu-1v'\h'\\n(^lu+3n'\L'\\n(^tu+1v-\\n(^yu'\l'|0u-1.5n\(ul'
+.\}
+.\}
+.fi
+.br
+.nr ^b 0
+..
+.\"	# VS - start vertical sidebar
+.\"	# ^Y = starting y location
+.\"	# ^v = 1 (for troff;  for nroff this doesn't matter)
+.de VS
+.if !"\\$2"" .br
+.mk ^Y
+.ie n 'mc \s12\(br\s0
+.el .nr ^v 1u
+..
+.\"	# VE - end of vertical sidebar
+.de VE
+.ie n 'mc
+.el \{\
+.ev 2
+.nf
+.ti 0
+.mk ^t
+\h'|\\n(^lu+3n'\L'|\\n(^Yu-1v\(bv'\v'\\n(^tu+1v-\\n(^Yu'\h'-|\\n(^lu+3n'
+.sp -1
+.fi
+.ev
+.\}
+.nr ^v 0
+..
+.\"	# Special macro to handle page bottom:  finish off current
+.\"	# box/sidebar if in box/sidebar mode, then invoked standard
+.\"	# page bottom macro.
+.de ^B
+.ev 2
+'ti 0
+'nf
+.mk ^t
+.if \\n(^b \{\
+.\"	Draw three-sided box if this is the box's first page,
+.\"	draw two sides but no top otherwise.
+.ie !\\n(^b-1 \h'-1.5n'\L'|\\n(^yu-1v'\l'\\n(^lu+3n\(ul'\L'\\n(^tu+1v-\\n(^yu'\h'|0u'\c
+.el \h'-1.5n'\L'|\\n(^yu-1v'\h'\\n(^lu+3n'\L'\\n(^tu+1v-\\n(^yu'\h'|0u'\c
+.\}
+.if \\n(^v \{\
+.nr ^x \\n(^tu+1v-\\n(^Yu
+\kx\h'-\\nxu'\h'|\\n(^lu+3n'\ky\L'-\\n(^xu'\v'\\n(^xu'\h'|0u'\c
+.\}
+.bp
+'fi
+.ev
+.if \\n(^b \{\
+.mk ^y
+.nr ^b 2
+.\}
+.if \\n(^v \{\
+.mk ^Y
+.\}
+..
+.\"	# DS - begin display
+.de DS
+.RS
+.nf
+.sp
+..
+.\"	# DE - end display
+.de DE
+.fi
+.RE
+.sp
+..
+.\"	# SO - start of list of standard options
+.de SO
+'ie '\\$1'' .ds So \\fBoptions\\fR
+'el .ds So \\fB\\$1\\fR
+.SH "STANDARD OPTIONS"
+.LP
+.nf
+.ta 5.5c 11c
+.ft B
+..
+.\"	# SE - end of list of standard options
+.de SE
+.fi
+.ft R
+.LP
+See the \\*(So manual entry for details on the standard options.
+..
+.\"	# OP - start of full description for a single option
+.de OP
+.LP
+.nf
+.ta 4c
+Command-Line Name:	\\fB\\$1\\fR
+Database Name:	\\fB\\$2\\fR
+Database Class:	\\fB\\$3\\fR
+.fi
+.IP
+..
+.\"	# CS - begin code excerpt
+.de CS
+.RS
+.nf
+.ta .25i .5i .75i 1i
+..
+.\"	# CE - end code excerpt
+.de CE
+.fi
+.RE
+..
+.\"	# UL - underline word
+.de UL
+\\$1\l'|0\(ul'\\$2
+..
+.\"	# QW - apply quotation marks to word
+.de QW
+.ie '\\*(lq'"' ``\\$1''\\$2
+.\"" fix emacs highlighting
+.el \\*(lq\\$1\\*(rq\\$2
+..
+.\"	# PQ - apply parens and quotation marks to word
+.de PQ
+.ie '\\*(lq'"' (``\\$1''\\$2)\\$3
+.\"" fix emacs highlighting
+.el (\\*(lq\\$1\\*(rq\\$2)\\$3
+..
+.\"	# QR - quoted range
+.de QR
+.ie '\\*(lq'"' ``\\$1''\\-``\\$2''\\$3
+.\"" fix emacs highlighting
+.el \\*(lq\\$1\\*(rq\\-\\*(lq\\$2\\*(rq\\$3
+..
+.\"	# MT - "empty" string
+.de MT
+.QW ""
+..
+.BS
+.SH NAME
+ttr \- Tcl Task Runner - Yet another Makefile alternative, based on Tcl
+.SH SYNOPSIS
+\fBTclTaskRunner\&.tcl\fR ?--option?=value?\&.\&.\&.? ?main\&.tcltask? ?--option=value\&.\&.\&.? ?target_or_method?
+.sp
+\fB\&./main\&.tcltask\fR ?--option=value\&.\&.\&.? ?target_or_method?
+.sp
+?\fBdefault\fR? \fBtarget\fR \fIname\fR \fBcheck\fR \fIcheckScript\fR \fBaction\fR \fIactionScript\fR \fBdependsTasks\fR \fItargetList\fR
+.sp
+\fBcheck\fR \fIscript\fR
+.sp
+\fBaction\fR \fIscript\fR
+.sp
+\fBdependsTasks\fR \fItargetNameList\fR
+.sp
+\fBdependsFiles\fR \fIFileNameList\fR
+.sp
+\fBproc\fR \fIname\fR \fIarglist\fR \fIbody\fR
+.sp
+\fBtarget list\fR
+.sp
+.BE
+.SH DESCRIPTION
+.PP
+TclTaskRunner\&.tcl (仮称\&. 以下 ttr)は Make に似た機能を持ったタスクランナー / ビルドツールです。
+.PP
+ttr ではタスクを "\fImain\&.tcltask\fR" ファイルに記述します。
+.CS
+
+#
+# all という名前でデフォルトのタスクを定義
+#
+default target all dependsTasks {
+   webmaster
+   devel
+}
+#
+# webmaster というタスクは webmaster アカウントの有無を検査して、無ければ作成
+#
+target webmaster check {
+    check-user $target
+} action {
+    ** exec useradd -s /sbin/nologin $target
+}
+#
+# コマンドの前の ** は dry-run 用のマーカー
+#
+# devel というタスクは devel グループの有無を検査して、無ければ作成
+#
+target devel check {
+    check-group $target
+} action {
+    ** exec groupadd $target
+}
+#
+# 以下は下請けの手続き
+#
+proc check-user {user} {\&.\&.\&.}
+proc check-group {user} {\&.\&.\&.}
+
+.CE
+tcltask ファイルの中身は snit::type へと変換されるので、通常の method, proc, option, variable 定義などを定義して、check や action の中で使うことが出来ます。
+.SH CLI
+.TP
+\fBTclTaskRunner\&.tcl\fR ?--option?=value?\&.\&.\&.? ?main\&.tcltask? ?--option=value\&.\&.\&.? ?target_or_method?
+コマンド行からの起動する場合の、引数の与え方です。
+引数省略時はカレントディレクトリ―の "\fImain\&.tcltask\fR" をタスク定義ファイルとして使用します。
+オプションはタスク定義ファイルの前か後に、\fB--option\fR 又は \fB--option=value\fR 形式で指定します。
+タスク定義ファイルの後には起動したいターゲット名か、メソッド名を渡すことが出来ます。
+（将来的にはタスク定義のオプションや変数オーバーライドも渡せるようにしたいと考えています）
+.RS
+.TP
+\fB-n\fR
+.TP
+\fB--dry-run\fR
+タスク定義の Action の \fB**\fR コマンドを dry-run モードに切り替えます。
+.TP
+\fB-d\fR
+.TP
+\fB--debug\fR
+.TP
+\fB--debug=\fIinteger\fR\fR
+デバッグモードで実行します。
+.TP
+\fB-s\fR
+.TP
+\fB--silent\fR
+\fB**\fR コマンドのトレース出力を抑制します。
+.RE
+.TP
+\fB\&./main\&.tcltask\fR ?--option=value\&.\&.\&.? ?target_or_method?
+Unix 系 OS の場合は tcltask ファイルに実行bit を立て、
+ファイルの先頭に
+.CS
+
+#!/usr/bin/env TclTaskRunner\&.tcl
+.CE
+.IP という行を
+書けば、 tcltask ファイル自体をコマンドとして使用することも出来ます。
+.PP
+.SH TASK定義ファイル"\FI*\&.TCLTASK\FR"
+ttr ではタスク定義ファイルには拡張子 "\fI*\&.tcltask\fR" を使います。
+ファイルの中身は（定義読み込み専用の tcl interpreter で実行された後に）
+snit の snit::type 定義へと変換されます。
+.SS ターゲット定義
+.TP
+?\fBdefault\fR? \fBtarget\fR \fIname\fR \fBcheck\fR \fIcheckScript\fR \fBaction\fR \fIactionScript\fR \fBdependsTasks\fR \fItargetList\fR
+\fIname\fR という名前でターゲット(タスク)を定義します。
+\fBdefault\fR を付けたターゲットはタスク定義ファイル全体のデフォルトターゲットとなります。
+ターゲットの定義には以下の項目を渡すことが出来ます。
+.RS
+.TP
+\fBcheck\fR \fIscript\fR
+ターゲットが既に成立しているか否かを検査するためのスクリプトを書きます。
+成立している場合は Tcl の真 (yes) を返して下さい。
+.CS
+
+file exists $target
+.CE
+.IP
+デバッグを容易にするため、真理値以外に任意個の key value リストを返すことも出来ます。
+.CS
+
+set data [read_file $target]
+list [expr {$data eq "foobar"}] data $data
+
+.CE
+.TP
+\fBaction\fR \fIscript\fR
+ターゲットが未成立な時に実行される Tcl スクリプトを書きます。
+破壊的な変更を行なうコマンドは必ず \fB**\fR コマンド経由で呼び出すようにします。
+こうすると、 dry-run モードの時は画面に表示を行なうだけになります。
+.CS
+
+** exec cat foo > $target
+.CE
+.IP
+bash などのシェルと違って Tcl の場合はリダイレクトも \fBexec\fR
+コマンドの引数に過ぎない(exec の中で評価)ので、リダイレクトも安全に dry-run 出来ます。
+.TP
+\fBdependsTasks\fR \fItargetNameList\fR
+このターゲットが依存するターゲットの名前をリスト形式で渡して下さい。
+リストの構築に不安が有る場合は Tcl 標準の \fBlist\fR 操作コマンドを
+使って下さい。
+.TP
+\fBdependsFiles\fR \fIFileNameList\fR
+依存先ターゲットをファイル名で指定したい時はこちらを使って下さい。
+.RE
+.TP
+\fBproc\fR \fIname\fR \fIarglist\fR \fIbody\fR
+（ほぼ）通常の Tcl手続きが定義出来ます。
+.PP
+.SS スクリプト内で使用可能な変数
+ターゲット定義のスクリプトでは以下の変数が使用可能です。
+.TP
+\fB$target\fR
+ターゲット名
+.TP
+\fB$self\fR
+このタスク定義を表す snit オブジェクト\&.
+.PP
+.SS "$SELF のメソッド"
+.TP
+\fBtarget list\fR
+このタスク定義に含まれる、全てのターゲットの名前一覧
+.PP
+.SH "SEE ALSO"
+Tcl(n), make(1), snit(n)
+.SH KEYWORDS
+Task Runner, make
+.SH CATEGORY
+Programming tools
+.SH COPYRIGHT
+.nf
+Copyright (c) 2020, by Hiroaki Kobayashi (hkoba)
+
+.fi

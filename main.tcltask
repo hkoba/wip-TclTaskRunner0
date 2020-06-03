@@ -1,0 +1,23 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- coding: utf-8; mode: tcl -*-
+
+package require Tcl 8.6; # [lmap] is 8.6 only
+
+set SRC [glob *.man]
+set HTML [lmap fn $SRC {string cat [file rootname $fn].html}]
+set ROFF [lmap fn $SRC {string cat [file rootname $fn].n}]
+
+default target all dependsTasks [list {*}$HTML {*}$ROFF]
+
+foreach fn $HTML {
+    target $fn dependsFiles [file rootname $fn].man action {
+        ** exec dtplite -o $target html $<
+    }
+}
+
+foreach fn $ROFF {
+    target $fn dependsFiles [file rootname $fn].man action {
+        ** exec dtplite -o $target nroff $<
+    }
+}
+

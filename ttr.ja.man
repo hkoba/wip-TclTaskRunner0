@@ -1,0 +1,188 @@
+[vset VERSION 0.1]
+[manpage_begin ttr n [vset VERSION]]
+[titledesc {Tcl Task Runner - Yet another Makefile alternative, based on Tcl}]
+[moddesc {Tcl Task Runner}]
+[category {Programming tools}]
+[copyright {2020, by Hiroaki Kobayashi (hkoba)}]
+[see_also make(1)]
+[see_also Tcl(n)]
+[see_also snit(n)]
+[keywords make]
+[keywords {Task Runner}]
+[description]
+[para]
+
+TclTaskRunner.tcl (仮称. 以下 ttr)は Make に似た機能を持ったタスクランナー / ビルドツールです。
+
+[para]
+
+ttr ではタスクを [file main.tcltask] ファイルに記述します。
+
+[example {#
+# all という名前でデフォルトのタスクを定義
+#
+default target all dependsTasks {
+   webmaster
+   devel
+}
+#
+# webmaster というタスクは webmaster アカウントの有無を検査して、無ければ作成
+#
+target webmaster check {
+    check-user $target
+} action {
+    ** exec useradd -s /sbin/nologin $target
+}
+#
+# コマンドの前の ** は dry-run 用のマーカー
+#
+# devel というタスクは devel グループの有無を検査して、無ければ作成
+#
+target devel check {
+    check-group $target
+} action {
+    ** exec groupadd $target
+}
+#
+# 以下は下請けの手続き
+#
+proc check-user {user} {...}
+proc check-group {user} {...}
+}]
+
+tcltask ファイルの中身は snit::type へと変換されるので、通常の method, proc, option, variable 定義などを定義して、check や action の中で使うことが出来ます。
+
+
+[section CLI]
+
+[list_begin definitions]
+
+
+[call [syscmd TclTaskRunner.tcl] [opt --option[opt =value]...] [opt main.tcltask] [opt --option=value...] [opt target_or_method]]
+
+コマンド行からの起動する場合の、引数の与え方です。
+引数省略時はカレントディレクトリ―の [file main.tcltask] をタスク定義ファイルとして使用します。
+
+オプションはタスク定義ファイルの前か後に、[const --option] 又は [const --option=value] 形式で指定します。
+
+タスク定義ファイルの後には起動したいターゲット名か、メソッド名を渡すことが出来ます。
+
+（将来的にはタスク定義のオプションや変数オーバーライドも渡せるようにしたいと考えています）
+
+
+[list_begin options]
+
+[opt_def -n]
+[opt_def --dry-run]
+
+タスク定義の Action の [cmd **] コマンドを dry-run モードに切り替えます。
+
+[opt_def -d]
+[opt_def --debug]
+[opt_def --debug=[arg integer]]
+
+デバッグモードで実行します。
+
+[opt_def -s]
+[opt_def --silent]
+
+[cmd **] コマンドのトレース出力を抑制します。
+
+[list_end]
+
+[call [syscmd ./main.tcltask] [opt --option=value...] [opt target_or_method]]
+
+Unix 系 OS の場合は tcltask ファイルに実行bit を立て、
+ファイルの先頭に [example {#!/usr/bin/env TclTaskRunner.tcl}] という行を
+書けば、 tcltask ファイル自体をコマンドとして使用することも出来ます。
+
+
+[list_end]
+
+[section Task定義ファイル[file *.tcltask]]
+
+ttr ではタスク定義ファイルには拡張子 [file *.tcltask] を使います。
+ファイルの中身は（定義読み込み専用の tcl interpreter で実行された後に）
+snit の snit::type 定義へと変換されます。
+
+[subsection ターゲット定義]
+
+[list_begin definitions]
+
+[call [opt [cmd default]] [cmd target] [arg name] [const check] [arg checkScript] [const action] [arg actionScript] [const dependsTasks] [arg targetList]]
+
+[arg name] という名前でターゲット(タスク)を定義します。 
+[cmd default] を付けたターゲットはタスク定義ファイル全体のデフォルトターゲットとなります。
+
+ターゲットの定義には以下の項目を渡すことが出来ます。
+
+[list_begin definitions]
+
+[call [const check] [arg script]]
+
+ターゲットが既に成立しているか否かを検査するためのスクリプトを書きます。
+成立している場合は Tcl の真 (yes) を返して下さい。
+
+[example {file exists $target}]
+
+デバッグを容易にするため、真理値以外に任意個の key value リストを返すことも出来ます。
+
+[example {set data [read_file $target]
+list [expr {$data eq "foobar"}] data $data
+}]
+
+[call [const action] [arg script]]
+
+ターゲットが未成立な時に実行される Tcl スクリプトを書きます。
+破壊的な変更を行なうコマンドは必ず [cmd **] コマンド経由で呼び出すようにします。
+こうすると、 dry-run モードの時は画面に表示を行なうだけになります。
+
+[example {** exec cat foo > $target}]
+
+bash などのシェルと違って Tcl の場合はリダイレクトも [cmd exec]
+コマンドの引数に過ぎない(exec の中で評価)ので、リダイレクトも安全に dry-run 出来ます。
+
+[call [const dependsTasks] [arg targetNameList]]
+
+このターゲットが依存するターゲットの名前をリスト形式で渡して下さい。
+リストの構築に不安が有る場合は Tcl 標準の [cmd list] 操作コマンドを
+使って下さい。
+
+[call [const dependsFiles] [arg FileNameList]]
+
+依存先ターゲットをファイル名で指定したい時はこちらを使って下さい。
+
+[list_end]
+
+
+[call [cmd proc] [arg name] [arg arglist] [arg body]]
+
+（ほぼ）通常の Tcl手続きが定義出来ます。
+
+[list_end]
+
+[subsection スクリプト内で使用可能な変数]
+
+ターゲット定義のスクリプトでは以下の変数が使用可能です。
+
+[list_begin definitions]
+
+[def [var {$target}]]
+ターゲット名
+
+[def [var {$self}]]
+このタスク定義を表す snit オブジェクト.
+
+[list_end]
+
+[subsection {$self のメソッド}]
+
+[list_begin definitions]
+
+[call [method {target list}]]
+
+このタスク定義に含まれる、全てのターゲットの名前一覧
+
+[list_end]
+
+[manpage_end]

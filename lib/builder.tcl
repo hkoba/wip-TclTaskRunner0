@@ -71,8 +71,6 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         interp alias $myInterp FILE \
             {} $self target-file add $varName
         
-        interp alias $myInterp var \
-            {} $self var add $varName
         interp alias $myInterp variable \
             {} $self variable add $varName
         interp alias $myInterp proc \
@@ -181,11 +179,6 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         }]
         
         list $kind $dict
-    }
-
-    method {var add} {defVar varName value} {
-        upvar 1 $defVar def
-        $def misc add var $varName [list $varName $value]
     }
 
     method {variable add} {defVar varName args} {

@@ -178,7 +178,6 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
                         %METHODS% [join [$self misc get method] \n] \
                         %PROCS% [join [$self misc get proc] \n] \
                         %DEPS% [$self deps] \
-                        %VARS% [join [$self misc get var] \n] \
                         %OPTIONS% [join [$self misc get option] \n] \
                         %VARIABLES% [join [$self misc get variable] \n]
                        ]
@@ -212,7 +211,6 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
             }
             #-----------------------------
 
-            variable vars -array {%VARS%}
             %OPTIONS%
             %VARIABLES%
             %METHODS%

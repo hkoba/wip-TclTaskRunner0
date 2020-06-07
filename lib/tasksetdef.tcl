@@ -70,24 +70,13 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     
     method {target lambda} {target script} {
         set targetNS [$self runtime typename]::Snit_inst1
-        lassign [$self target extra-args $target] vars values
         set preamble "::variable options;\n"
         foreach vspec [$self misc get variable] {
             append preamble "::variable [lindex $vspec 1];\n"
         }
-        list apply [list [list self target {*}$vars] \
+        list apply [list [list self target] \
                         $preamble$script $targetNS] \
-            [$self runtime instance] $target {*}$values
-    }
-
-    method {target extra-args} target {
-        set vars []
-        set vals []
-        foreach {var val} [dict-default [dict get $myDeps $target] vars] {
-            lappend vars $var
-            lappend vals $val
-        }
-        list $vars $vals
+            [$self runtime instance] $target
     }
 
     # Below defines [$scope target check $targetName],

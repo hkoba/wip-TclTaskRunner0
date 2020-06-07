@@ -74,9 +74,9 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         foreach vspec [$self misc get variable] {
             append preamble "::variable [lindex $vspec 1];\n"
         }
-        list apply [list [list self target] \
+        list apply [list [list self selfns target] \
                         $preamble$script $targetNS] \
-            [$self runtime instance] $target
+            [$self runtime instance] $selfns $target
     }
 
     # Below defines [$scope target check $targetName],

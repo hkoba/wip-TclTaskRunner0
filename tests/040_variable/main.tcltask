@@ -1,0 +1,31 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+# This variable is an instance variable of this taskset definition.
+variable myList init
+
+default target all dependsTasks {
+    init first second
+} action {
+    puts "Now myList=$myList"
+    puts [info exists ::myList],[info exists myList]
+    puts [myvar myList]
+}
+
+target init check {
+    expr {"init" in $myList}
+} action {
+    ** error "Should not be called"
+}
+
+target first check {
+    expr {"first" in $myList}
+} action {
+    ** lappend myList first
+}
+
+target second check {
+    expr {$target in $myList}
+} action {
+    ** lappend myList $target
+}

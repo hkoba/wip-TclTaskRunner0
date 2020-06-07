@@ -34,7 +34,9 @@ snit::macro ::TclTaskRunner::use_worker {} {
             }
             {*}$myWorker $script
         }
-        
+        foreach {name pkgSpec} [$self registry package loaded] {
+            {*}$myWorker [list package require $name {*}$pkgSpec]
+        }
         foreach def [dict values [$self registry all]] {
             foreach ns [$def import ns-list] {
                 {*}$myWorker [TclTaskRunner::ns-definition $ns]

@@ -1,0 +1,19 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+package require struct::list
+
+variable limit 3
+variable numbers []
+
+default target all dependsTasks [struct::list iota $limit] action {
+    puts [list numbers $numbers]
+}
+
+foreach i [struct::list iota $limit] {
+    target $i check {
+        expr {[struct::list filterfor j $numbers {$target == $j}] ne ""}
+    } action {
+        ** lappend numbers $target
+    }
+}

@@ -51,9 +51,12 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
         $myInterp eval {rename proc __proc}
         $myInterp eval {rename variable __variable}
+        $myInterp eval {rename package __package}
     }
     
     #========================================
+
+    variable myPkgDepth 0
 
     method prepare-context varName {
         interp alias $myInterp default \
@@ -86,6 +89,9 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         
         interp alias $myInterp import \
             {} $self declare import $varName
+        
+        interp alias $myInterp package \
+            {} $self declare package $varName
     }
 
     method {declare use} {varName name args} {
@@ -131,6 +137,19 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                 return $absFn
             }
         }
+    }
+
+    method {declare package} {defVar cmd args} {
+        upvar 1 $defVar def
+        if {!$myPkgDepth && $cmd eq "require"} {
+            $myRegistry package require {*}$args
+        }
+        incr myPkgDepth
+        set rc [catch {
+            $myInterp eval [list namespace eval :: [list __package $cmd {*}$args]]
+        } result opts]
+        incr myPkgDepth -1
+        return -code $rc -options $opts $result
     }
 
     method filename-from-extern {rootName baseDef} {
@@ -183,6 +202,10 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     method {variable add} {defVar varName args} {
         upvar 1 $defVar def
+        if {$myPkgDepth} {
+            $myInterp eval [list __variable $varName {*}$args]
+            return
+        }
         if {![regexp {^\w+$} $varName]} {
             # Do not expose this name to $myInterp
         } elseif {$args eq ""} {
@@ -200,6 +223,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     method {proc add} {defVar procName args} {
         upvar 1 $defVar def
         $myInterp eval [list __proc $procName {*}$args]
+        if {$myPkgDepth} return
         $def misc add proc $procName [list proc $procName {*}$args]
     }
 

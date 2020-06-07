@@ -9,6 +9,7 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
     option -task-extension .tcltask
     
     variable myDict [dict create]
+    variable myPackageDict [dict create]
 
     typevariable ourUseSpecRe {^@|\.tcltask$}
 
@@ -82,6 +83,19 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
 
         return @[string map {/ ::} $relFn]
     }
+    
+    method {package require} {name args} {
+        if {[dict exists $myPackageDict $name]
+            && [package vsatisfies [dict get $myPackageDict $name] {*}$args]} {
+            return [dict get $myPackageDict $name]
+        }
+        dict set myPackageDict $name \
+            [package require $name {*}$args]
+    }
+    method {package loaded} {} {
+        set myPackageDict
+    }
+    
 }
 
 if {![info level] && [info script] eq $::argv0} {

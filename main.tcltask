@@ -1,12 +1,12 @@
 #!/usr/bin/env TclTaskRunner.tcl
 # -*- coding: utf-8; mode: tcl -*-
 
-package require Tcl 8.6; # [lmap] is 8.6 only
+package require struct::list
 
 set SRC [glob *.man]
-set HTML [lmap fn $SRC {string cat [file rootname $fn].html}]
-set ROFF [lmap fn $SRC {string cat [file rootname $fn].n}]
-set MKDN [lmap fn $SRC {string cat [file rootname $fn].md}]
+set HTML [struct::list mapfor fn $SRC {string cat [file rootname $fn].html}]
+set ROFF [struct::list mapfor fn $SRC {string cat [file rootname $fn].n}]
+set MKDN [struct::list mapfor fn $SRC {string cat [file rootname $fn].md}]
 
 default target all dependsTasks $MKDN
 

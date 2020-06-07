@@ -1,0 +1,22 @@
+#!/usr/bin/env tclsh
+
+package require tcltest
+namespace import tcltest::*
+
+package require fileutil
+package require struct::list
+
+set testScript [file normalize [info script]]
+set testDir    [file rootname $testScript]
+set runnerFn   [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
+
+#========================================
+set THEME package
+
+set ::env(PATH) [file dirname $runnerFn]:$::env(PATH)
+
+test $THEME-exec-1 "exec TclTaskRunner.tcl main.tcltask" -body {
+
+    exec [info nameofexecutable] $runnerFn --silent $testDir/main.tcltask
+
+} -result {numbers {0 1 2}}

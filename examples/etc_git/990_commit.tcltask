@@ -3,18 +3,27 @@
 
 use [glob *etc_git.tcltask] as @etc_git
 
-default target commit dependsTasks @etc_git check {
+default target commit dependsTasks @etc_git vars {
 
-    if {![file isdirectory /etc/.git]} {
-        return no
+    dir  /etc/.git
+
+} check {
+
+    if {![file isdirectory $dir]} {
+        return [list no diag "$dir is not a directory"]
     }
 
-    set status [exec git --work-tree=/etc --git-dir=/etc/.git status -su]
+    if {![file readable $dir]} {
+        return [list no diag "$dir is not readable"]
+    }
+
+    set status [exec git --work-tree=/etc --git-dir=$dir status -su]
     
     list [expr {$status eq ""}] status $status
 
 } action {
-    ** exec git --work-tree=/etc --git-dir=/etc/.git add -A :/
 
-    ** exec -ignorestderr git --work-tree=/etc --git-dir=/etc/.git commit -m init
+    ** exec git --work-tree=/etc --git-dir=$dir add -A :/
+
+    ** exec -ignorestderr git --work-tree=/etc --git-dir=$dir commit -m init
 }

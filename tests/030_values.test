@@ -1,0 +1,22 @@
+#!/usr/bin/env tclsh
+
+package require tcltest
+namespace import tcltest::*
+
+package require fileutil
+package require struct::list
+
+set testScript [file normalize [info script]]
+set testDir    [file rootname $testScript]
+set runnerFn   [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
+
+#========================================
+set THEME variable
+
+set ::env(PATH) [file dirname $runnerFn]:$::env(PATH)
+
+test $THEME-exec-1 "exec TclTaskRunner.tcl main.tcltask" -body {
+
+    exec [info nameofexecutable] $runnerFn $testDir/main.tcltask
+
+} -result {set ::theVar FOOBAR}

@@ -1,0 +1,11 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+default target main values {
+    x FOO
+    y BAR
+} check {
+    expr {[info exists ::theVar] && $::theVar eq "$x$y"}
+} action {
+    ** set ::theVar $x$y
+}

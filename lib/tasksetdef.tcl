@@ -16,7 +16,7 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     
     typevariable ourKnownKeys [set knownKeys [::TclTaskRunner::enum_dict \
                                                   kind  public check action \
-                                                  vars \
+                                                  values \
                                                   diag \
                                                   dependsTasks dependsFiles]]
     typemethod knownKey name {
@@ -83,7 +83,7 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     method {target extra-args} target {
         set vars []
         set vals []
-        foreach {var val} [dict-default [dict get $myDeps $target] vars] {
+        foreach {var val} [dict-default [dict get $myDeps $target] values] {
             lappend vars $var
             lappend vals $val
         }

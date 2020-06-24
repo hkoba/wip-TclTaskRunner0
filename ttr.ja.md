@@ -50,7 +50,7 @@ ttr \- Tcl Task Runner \- Yet another Makefile alternative, based on Tcl
 
 TclTaskRunner\.tcl \(仮称\. 以下 ttr\)は Make に似た機能を持ったタスクランナー / ビルドツールです。
 
-ttr ではタスクを "main\.tcltask" ファイルに記述します。
+ttr ではタスクを "main\.tcltask" ファイルに記述します。 各タスクは __target__ コマンドで定義されます。
 
     #
     # all という名前でデフォルトのタスクを定義
@@ -84,7 +84,7 @@ ttr ではタスクを "main\.tcltask" ファイルに記述します。
     proc check-group {user} {...}
 
 tcltask ファイルの中身は snit::type へと変換されるので、通常の method, proc, option, variable
-定義などを定義して、check や action の中で使うことが出来ます。
+を定義して、check や action の中で使うことが出来ます。
 
 # <a name='section2'></a>CLI
 
@@ -158,12 +158,12 @@ ttr ではタスク定義ファイルには拡張子 "\*\.tcltask" を使いま�
 
       * <a name='6'></a>__dependsTasks__ *targetNameList*
 
-        このターゲットが依存するターゲットの名前をリスト形式で渡して下さい。 リストの構築に不安が有る場合は Tcl 標準の __list__
-        操作コマンドを 使って下さい。
+        このターゲットが依存するターゲット名の一覧を Tcl リスト形式で渡して下さい。 リストの構築に不安が有る場合は Tcl 標準の
+        __list__ 操作コマンドを 使って下さい。
 
       * <a name='7'></a>__dependsFiles__ *FileNameList*
 
-        依存先ターゲットをファイル名で指定したい時はこちらを使って下さい。
+        このターゲットが依存するファイル名の一覧を Tcl リスト形式で渡して下さい。
 
   - <a name='8'></a>__proc__ *name* *arglist* *body*
 

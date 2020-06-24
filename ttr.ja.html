@@ -139,7 +139,8 @@
 </div>
 <div id="section1" class="doctools_section"><h2><a name="section1">Description</a></h2>
 <p>TclTaskRunner.tcl (仮称. 以下 ttr)は Make に似た機能を持ったタスクランナー / ビルドツールです。</p>
-<p>ttr ではタスクを &quot;<b class="file">main.tcltask</b>&quot; ファイルに記述します。</p>
+<p>ttr ではタスクを &quot;<b class="file">main.tcltask</b>&quot; ファイルに記述します。
+各タスクは <b class="cmd">target</b> コマンドで定義されます。</p>
 <pre class="doctools_example">#
 # all という名前でデフォルトのタスクを定義
 #
@@ -171,7 +172,7 @@ target devel check {
 proc check-user {user} {...}
 proc check-group {user} {...}
 </pre>
-<p>tcltask ファイルの中身は snit::type へと変換されるので、通常の method, proc, option, variable 定義などを定義して、check や action の中で使うことが出来ます。</p>
+<p>tcltask ファイルの中身は snit::type へと変換されるので、通常の method, proc, option, variable を定義して、check や action の中で使うことが出来ます。</p>
 </div>
 <div id="section2" class="doctools_section"><h2><a name="section2">CLI</a></h2>
 <dl class="doctools_definitions">
@@ -233,11 +234,11 @@ list [expr {$data eq &quot;foobar&quot;}] data $data
 <p>bash などのシェルと違って Tcl の場合はリダイレクトも <b class="cmd">exec</b>
 コマンドの引数に過ぎない(exec の中で評価)ので、リダイレクトも安全に dry-run 出来ます。</p></dd>
 <dt><a name="6"><b class="const">dependsTasks</b> <i class="arg">targetNameList</i></a></dt>
-<dd><p>このターゲットが依存するターゲットの名前をリスト形式で渡して下さい。
+<dd><p>このターゲットが依存するターゲット名の一覧を Tcl リスト形式で渡して下さい。
 リストの構築に不安が有る場合は Tcl 標準の <b class="cmd">list</b> 操作コマンドを
 使って下さい。</p></dd>
 <dt><a name="7"><b class="const">dependsFiles</b> <i class="arg">FileNameList</i></a></dt>
-<dd><p>依存先ターゲットをファイル名で指定したい時はこちらを使って下さい。</p></dd>
+<dd><p>このターゲットが依存するファイル名の一覧を Tcl リスト形式で渡して下さい。</p></dd>
 </dl></dd>
 <dt><a name="8"><b class="cmd">proc</b> <i class="arg">name</i> <i class="arg">arglist</i> <i class="arg">body</i></a></dt>
 <dd><p>（ほぼ）通常の Tcl手続きが定義出来ます。</p></dd>

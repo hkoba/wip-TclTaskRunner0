@@ -8,7 +8,7 @@ set HTML [struct::list mapfor fn $SRC {string cat [file rootname $fn].html}]
 set ROFF [struct::list mapfor fn $SRC {string cat [file rootname $fn].n}]
 set MKDN [struct::list mapfor fn $SRC {string cat [file rootname $fn].md}]
 
-default target all dependsTasks $MKDN
+default target all dependsTasks [list {*}$MKDN {*}$HTML]
 
 # Note: To format to markdown by dtplite, you must add symlink to fmt.markdown
 # 

@@ -17,6 +17,7 @@ TclTaskRunner.tcl (仮称. 以下 ttr)は Make に似た機能を持ったタス
 [para]
 
 ttr ではタスクを [file main.tcltask] ファイルに記述します。
+各タスクは [cmd target] コマンドで定義されます。
 
 [example {#
 # all という名前でデフォルトのタスクを定義
@@ -50,7 +51,7 @@ proc check-user {user} {...}
 proc check-group {user} {...}
 }]
 
-tcltask ファイルの中身は snit::type へと変換されるので、通常の method, proc, option, variable 定義などを定義して、check や action の中で使うことが出来ます。
+tcltask ファイルの中身は snit::type へと変換されるので、通常の method, proc, option, variable を定義して、check や action の中で使うことが出来ます。
 
 
 [section CLI]
@@ -144,13 +145,13 @@ bash などのシェルと違って Tcl の場合はリダイレクトも [cmd e
 
 [call [const dependsTasks] [arg targetNameList]]
 
-このターゲットが依存するターゲットの名前をリスト形式で渡して下さい。
+このターゲットが依存するターゲット名の一覧を Tcl リスト形式で渡して下さい。
 リストの構築に不安が有る場合は Tcl 標準の [cmd list] 操作コマンドを
 使って下さい。
 
 [call [const dependsFiles] [arg FileNameList]]
 
-依存先ターゲットをファイル名で指定したい時はこちらを使って下さい。
+このターゲットが依存するファイル名の一覧を Tcl リスト形式で渡して下さい。
 
 [list_end]
 

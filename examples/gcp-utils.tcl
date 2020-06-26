@@ -5,6 +5,8 @@
 
 package require http
 
+# TODO: depends utils.tcl
+
 namespace eval gcp-utils {
 
     proc gcp-instance-metadata attribute {

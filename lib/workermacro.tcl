@@ -20,7 +20,21 @@ snit::macro ::TclTaskRunner::use_worker {} {
     }
     
     method {worker call} args {
+        if {$options(-debug) >= 3} {
+            foreach line [split $args \n] {
+                $self dputsRaw "# $line"
+            }
+        }
         {*}$myWorker $args
+    }
+
+    method {worker do} script {
+        if {$options(-debug) >= 3} {
+            foreach line [split $script \n] {
+                $self dputsRaw "# $line"
+            }
+        }
+        {*}$myWorker $script
     }
 
     method {worker sync} {} {

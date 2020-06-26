@@ -38,28 +38,32 @@ snit::macro ::TclTaskRunner::use_worker {} {
     }
 
     method {worker sync} {} {
+        if {$options(-debug) >= 2} {
+            $self dputsRaw "# == worker sync begin =="
+        }
         if {[{*}$myWorker [list info commands ::snit::type]] eq ""} {
-            {*}$myWorker [list package require snit]
+            $self worker call package require snit
         }
         if {[{*}$myWorker [list info commands $type]] eq ""} {
             set script [TclTaskRunner::ns-definition ::TclTaskRunner]
-            if {$options(-debug) >= 3} {
-                puts \#[list sync type $script]
-            }
-            {*}$myWorker $script
+            $self worker do $script
         }
         foreach {name pkgSpec} [$self registry package loaded] {
-            {*}$myWorker [list package require $name {*}$pkgSpec]
+            $self worker call package require $name {*}$pkgSpec
         }
         foreach def [dict values [$self registry all]] {
             foreach ns [$def import ns-list] {
-                {*}$myWorker [TclTaskRunner::ns-definition $ns]
+                $self worker do [TclTaskRunner::ns-definition $ns]
             }
-            {*}$myWorker [list uplevel #0 [$myBuilder taskset genscript $def]]
+            $self worker call uplevel #0 [$myBuilder taskset genscript $def]
         }
 
         interp alias $myInterp $options(-dry-run-marker) \
             {} $self worker traced
+
+        if {$options(-debug) >= 2} {
+            $self dputsRaw "# == worker sync end =="
+        }
     }
 
     method {worker traced} args {

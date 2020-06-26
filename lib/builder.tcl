@@ -57,6 +57,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     #========================================
 
     variable myPkgDepth 0
+    variable mySourceDepth 0
+    method is-toplevel {} {expr {$myPkgDepth == 0 && $mySourceDepth == 0}}
 
     method prepare-context varName {
         interp alias $myInterp default \
@@ -126,6 +128,14 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             error "\[import $what from $fromFn\] didn't return namespace"
         }
 
+        set mySourceDepth 1
+        # Why not worked: XXX:  scope_guard here [list set mySourceDepth 0]
+
+        # Eval it in the builder interpreter too (to capture [package require])
+        $myInterp eval [list namespace eval :: [list uplevel #0 [list source $realScriptFn]]]
+
+        set mySourceDepth 0
+
         $def import add $what $fromFn $gotNS
     }
 
@@ -141,6 +151,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     method {declare package} {defVar cmd args} {
         upvar 1 $defVar def
+        # "import from → package require" should be traced.
         if {!$myPkgDepth && $cmd eq "require"} {
             $myRegistry package require {*}$args
         }
@@ -202,7 +213,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     method {variable add} {defVar varName args} {
         upvar 1 $defVar def
-        if {$myPkgDepth} {
+        if {![$self is-toplevel]} {
             $myInterp eval [list __variable $varName {*}$args]
             return
         }
@@ -223,7 +234,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     method {proc add} {defVar procName args} {
         upvar 1 $defVar def
         $myInterp eval [list __proc $procName {*}$args]
-        if {$myPkgDepth} return
+        if {![$self is-toplevel]} return
         $def misc add proc $procName [list proc $procName {*}$args]
     }
 

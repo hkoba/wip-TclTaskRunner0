@@ -3,7 +3,7 @@
 
 use [glob *etc_git.tcltask] as @etc_git
 
-default target commit dependsTasks @etc_git vars {
+default target commit dependsTasks @etc_git values {
 
     dir  /etc/.git
 

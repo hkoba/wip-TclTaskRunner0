@@ -3,6 +3,8 @@
 
 # import * from gcp-utils.tcl
 
+package require http
+
 namespace eval gcp-utils {
 
     proc gcp-instance-metadata attribute {
@@ -10,12 +12,21 @@ namespace eval gcp-utils {
     }
 
     proc gcp-metadata location {
-        package require http
+
         set tok [http::geturl http://metadata/computeMetadata/v1/$location \
                      -headers [list Metadata-Flavor Google]]
-        set data [http::data $tok]
-        http::cleanup $tok
-        set data
+
+        ::utils::scope_guard tok [list http::cleanup $tok]
+
+        if {[http::ncode $tok] != 200} {
+
+            error [list $location :: {*}[http::code $tok] ]
+
+        } else {
+
+            http::data $tok
+
+        }
     }
 
     namespace export *

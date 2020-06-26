@@ -1,6 +1,7 @@
 #!/usr/bin/env TclTaskRunner.tcl
 # -*- coding: utf-8; mode: tcl -*-
 
+import * from utils.tcl
 import * from adm-utils.tcl
 
 # https://dl.google.com/cloudagents/add-logging-agent-repo.sh
@@ -15,6 +16,28 @@ default target all dependsTasks {
 
 target google-cloud-monitoring dependsTasks stackdriver-agent
 target google-cloud-logging dependsTasks google-fluentd
+
+#----------------------------------------
+
+variable REPO_HOST packages.cloud.google.com
+
+set os_release [::utils::read_shell_env_file /etc/os-release]
+
+variable EL_MAJOR_VERSION [switch [dict get $os_release ID] {
+    fedora {
+        if {[dict get $os_release VERSION_ID] >= 28} {
+            list el8
+        } else {
+            list el7
+        }
+    }
+    centos {
+        dict get $os_release VERSION_ID
+    }
+    default {
+        error "Can't find el version"
+    }
+}]
 
 #========================================
 
@@ -34,15 +57,15 @@ target {install stackdriver-agent} dependsFiles /etc/yum.repos.d/google-cloud-mo
 }
 
 FILE /etc/yum.repos.d/google-cloud-monitoring.repo {} {
-    ** write_file $target {[google-cloud-monitoring]
+    ** write_file $target [string map [list @REPO@ $REPO_HOST @VER@ $EL_MAJOR_VERSION] {[google-cloud-monitoring]
 name=Google Cloud Monitoring Agent Repository
-baseurl=https://packages.cloud.google.com/yum/repos/google-cloud-monitoring-el7-$basearch
+baseurl=https://@REPO@/yum/repos/google-cloud-monitoring-@VER@-$basearch
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-}
+gpgkey=https://@REPO@/yum/doc/yum-key.gpg
+       https://@REPO@/yum/doc/rpm-package-key.gpg
+}]
 }
 
 #========================================
@@ -64,15 +87,15 @@ target {install google-fluentd} dependsFiles /etc/yum.repos.d/google-cloud-loggi
 }
 
 FILE /etc/yum.repos.d/google-cloud-logging.repo {} {
-    ** write_file $target {[google-cloud-logging]
+    ** write_file $target [string map [list @REPO@ $REPO_HOST @VER@ $EL_MAJOR_VERSION] {[google-cloud-logging]
 name=Google Cloud Logging Agent Repository
-baseurl=https://packages.cloud.google.com/yum/repos/google-cloud-logging-el7-$basearch
+baseurl=https://@REPO@/yum/repos/google-cloud-logging-@VER@-$basearch
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-}
+gpgkey=https://@REPO@/yum/doc/yum-key.gpg
+       https://@REPO@/yum/doc/rpm-package-key.gpg
+}]
 }
 
 proc query-rpm package {

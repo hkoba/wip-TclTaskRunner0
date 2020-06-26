@@ -12,15 +12,18 @@ snit::macro ::TclTaskRunner::use_logging {{silent no}} {
     option -indent "  "
     
     method dputs {depth args} {$self dputsLevel 1 $depth {*}$args}
+    method dputsRaw line {
+        puts $options(-debug-fh) $line
+    }
     method dputsLevel {level depth args} {
         if {$options(-debug) < $level} return
         set indent [string repeat $options(-indent) $depth]
         set lineList [split $args \n]
         foreach line $lineList {
-            puts $options(-debug-fh) "$indent#| $line"
+            $self dputsRaw "$indent#| $line"
         }
         if {[llength $lineList] >= 2} {
-            puts $options(-debug-fh) "$indent#|"
+            $self dputsRaw "$indent#|"
         }
     }
 }

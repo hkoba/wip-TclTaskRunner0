@@ -32,6 +32,7 @@ target /etc/.gitignore dependsFiles {} action {
         *.O
         *rpmorig
         *rpmnew
+	*swp
         udev/hwdb.bin
     }]
 }

@@ -79,8 +79,7 @@ snit::type ::TclTaskRunner::RunContext {
                 [set [$scope varName myDeps]]
         }
 
-        set thisMtime [$self mtime $targetTuple $depth]
-
+        array set predMtime []
         foreach pred $depends {
             $self dputs $depth testing $pred from $targetTuple
             if {[set v [default myVisited($pred) 0]] == 0} {
@@ -88,18 +87,23 @@ snit::type ::TclTaskRunner::RunContext {
             } elseif {$v == 1} {
                 error "Task $pred and $targetTuple are circularly defined!"
             }
-            set predMtime [$self mtime $pred $depth]
-            if {$thisMtime < $predMtime} {
+            set predMtime($pred) [$self mtime $pred $depth]
+        }
+        
+        set thisMtime [$self mtime $targetTuple $depth]
+
+        foreach pred $depends {
+            if {$thisMtime < $predMtime($pred)} {
                 lappend changed $pred
-            } elseif {$predMtime == -Inf && $thisMtime != -Inf} {
+            } elseif {$predMtime($pred) == -Inf && $thisMtime != -Inf} {
                 $self dputs $depth pred is not changed but infinitely old: $pred
                 lappend changed $pred
             } else {
                 $self dputs $depth Not changed $pred \
-                    mtime $predMtime $targetTuple $thisMtime
+                    mtime $predMtime($pred) $targetTuple $thisMtime
             }
         }
-        
+
         set myVisited($targetTuple) 2
         
         if {[llength $changed]

@@ -119,7 +119,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             error "Only \[import pattern from file] is supported"
         }
 
-        if {[set realScriptFn [$self lookup-upward-from [$def directory] $fromFn]] eq ""} {
+        if {[set realScriptFn [$self lookup-source-from-file \
+                                   [$def cget -file] $fromFn]] eq ""} {
             error "Can't find $fromFn from directory [$def directory]"
         }
 
@@ -137,6 +138,24 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         set mySourceDepth 0
 
         $def import add $what $fromFn $gotNS
+    }
+
+    method lookup-source-from-file {fromFn lookupFn} {
+        #
+        # 1. Lookup $lookupFn from actual tcltask location.
+        #
+        if {[set fn [$self lookup-upward-from [file dirname $fromFn] $lookupFn]] ne ""} {
+            return $fn
+        }
+        #
+        # 2. When 1. failed and $fromFn is a symlink, lookup $lookupFn
+        # from fully-symlink-resolved path of $fromFn.
+        #
+        if {[file type $fromFn] eq "link"
+            &&
+            [set fn [$self lookup-upward-from [file dirname [fileutil::fullnormalize $fromFn]] $lookupFn]] ne ""} {
+            return $fn
+        }
     }
 
     method lookup-upward-from {dir fn} {

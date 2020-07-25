@@ -128,8 +128,23 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     }
 
     variable myImportList []
-    method {import add} {pattern fromFile fileNS} {
-        lappend myImportList [list $pattern $fromFile $fileNS]
+    method {import add} {patternList fromFile fileNS} {
+        
+        # Verify typos of import patterns
+        set testNS ${selfns}::comptype
+        foreach pat $patternList {
+            namespace eval $testNS \
+                [list namespace import ${fileNS}::$pat]
+            if {$pat ne "*"} {
+                set origCmd [namespace eval $testNS \
+                                [list namespace which -command $pat]]
+                if {$origCmd eq ""} {
+                    error "Can't import $pat from namespace $fileNS file $fromFile"
+                }
+            }
+        }
+
+        lappend myImportList [list $patternList $fromFile $fileNS]
     }
     method {import list} {} {set myImportList}
     method {import ns-list} {} {

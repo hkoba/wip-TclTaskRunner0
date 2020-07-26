@@ -1,0 +1,60 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- coding: utf-8; mode: tcl -*-
+
+import {
+    lgrep
+    read_file_lines
+    append_file_line
+} from utils.tcl
+
+variable procFn /proc/swaps
+variable swapFn /var/swapfile
+
+default target main dependsTasks {
+    swapon
+}
+
+target swapon dependsTasks {
+    fstab
+} check {
+    expr {[llength [read_file_lines $procFn]] >= 2}
+} action {
+    ** exec swapon -a
+}
+
+variable FSTAB /etc/fstab
+
+target fstab dependsTasks swapfile check {
+    set lines [lgrep {^[^\#]} [read_file_lines $FSTAB]]
+    set found [lsearch -exact -inline -index 1 $lines swap]
+    list [expr {$found ne ""}] found $found
+} action {
+    ** append_file_line $FSTAB "$swapFn swap swap defaults 0 0"
+}
+
+target swapfile check {
+    file exists $swapFn
+} action {
+    ** exec -ignorestderr dd if=/dev/zero of=$swapFn bs=1M \
+        count=[$self recommended-swap-size] \
+        >@ stdout 2>@1
+    ** exec chmod 0600 $swapFn
+    ** exec -ignorestderr mkswap $swapFn \
+        >@ stdout 2>@1
+}
+
+method recommended-swap-size {} {
+    set memsize [$self memsize]
+    if {$memsize <= 2048} {
+        return 2048
+    } elseif {$memsize < 8192} {
+        return $memsize
+    } else {
+        return 8192
+    }
+}
+
+# MiB 単位で memtotal を返す
+method memsize {} {
+    expr {[lindex [exec grep MemTotal: /proc/meminfo] 1] / 1024}
+}

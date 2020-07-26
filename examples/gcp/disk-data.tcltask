@@ -1,0 +1,79 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- coding: utf-8; mode: tcl -*-
+
+import {
+    lgrep
+    read_file_lines
+    append_file_line
+    scope_guard
+} from utils.tcl
+
+variable MOUNT_DIR /data
+variable DEVICE    /dev/disk/by-id/google-data
+variable FSTAB     /etc/fstab
+variable PROCFS    /proc/mounts
+
+option -fstype ext4
+option -fsopts {-F -m 0}
+
+default target main dependsTasks [list "$MOUNT_DIR mounted"]
+
+target "$MOUNT_DIR mounted" dependsTasks [list "$MOUNT_DIR fstab"] check {
+    set result [$self lsearch-file $PROCFS $MOUNT_DIR -index 1]
+    list [expr {$result ne ""}] mounts $result
+} action {
+    ** exec mount $MOUNT_DIR >@ stdout 2>@1
+}
+
+target "$MOUNT_DIR fstab" dependsTasks [list $MOUNT_DIR "$DEVICE fs"] check {
+    set result [$self lsearch-file $FSTAB $MOUNT_DIR -index 1]
+    list [expr {$result ne ""}] fstab $result
+} action {
+    ** append_file_line $FSTAB "$DEVICE $MOUNT_DIR $options(-fstype) rw,relatime 0 0"
+}
+
+target $MOUNT_DIR check {
+    file isdirectory $target
+} action {
+    ** file mkdir $target
+}
+
+target "$DEVICE fs" check {
+    set gotFS [lsblk_fstype $DEVICE]
+    list [expr {$gotFS eq $options(-fstype)}] gotFS $gotFS
+} action {
+    set gotFS [lsblk_fstype $DEVICE]
+    if {$gotFS eq ""} {
+        ** exec -ignorestderr \
+            mkfs.$options(-fstype) {*}$options(-fsopts) $DEVICE \
+            >@ stdout 2>@1
+        
+        # Wait until lsblk returns correct FSTYPE
+        set i 0
+        after 300
+        while {[lsblk_fstype $DEVICE] eq "" && $i <= 4} {
+            after 300
+            incr i
+        }
+
+    } elseif {$gotFS ne $options(-fstype)} {
+        error "DEVICE $DEVICE is already formatted differently! got $gotFS, expect $options(-fstype)"
+    }
+}
+
+proc lsblk_fstype device {
+    string trim [exec lsblk -n -o FSTYPE $device]
+}
+
+proc with_mount {opts device mountDir command} {
+    puts "# temporarily mounting $device on $mountDir..."
+    exec mount {*}$opts $device $mountDir
+    scope_guard device [list exec umount $device]
+    uplevel 1 $command
+}
+
+method lsearch-file {fileName pattern args} {
+    set ignorePat [from args -ignore {^[^\#]}]
+    set lines [lgrep $ignorePat [read_file_lines $fileName]]
+    lsearch -exact -inline {*}$args $lines $pattern
+}

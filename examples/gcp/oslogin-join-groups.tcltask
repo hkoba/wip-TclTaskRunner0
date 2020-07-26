@@ -1,0 +1,126 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- coding: utf-8; mode: tcl -*-
+
+#========================================
+#
+# This script requires pam_script in this directory to be installed
+# under /admkit/pam_script
+#
+#========================================
+
+package require struct::list
+
+import {
+    scope_guard
+    append_file_line
+    read_file_lines
+} from utils.tcl
+
+import {
+    sed-insert-before
+} from sed-utils.tcl
+
+#----------------------------------------
+
+variable pamFn /etc/pam.d/sshd
+variable pamScriptPath /admkit/pam_script
+variable pamAction [list pam_exec.so stdout $pamScriptPath/join_groups.zsh]
+
+#----------------------------------------
+
+default target main dependsTasks restorecon check {
+    set found [$self has-pam-action $pamFn]
+    list [expr {$found ne ""}] found $found
+} action {
+
+    set selinuxLine [$self find-pam-action $pamFn \
+                         session "pam_selinux.so open*"]
+
+    set content "session	   optional     $pamAction"
+
+    if {$selinuxLine ne ""} {
+        set lineNo [lindex $selinuxLine end]
+        
+        ** sed-insert-before $pamFn $lineNo $content -i
+
+    } else {
+        ** append_file_line $pamFn $content
+    }
+}
+
+method has-pam-action fn {
+    $self find-pam-action $fn session $pamAction*
+}
+
+method find-pam-action {fn typ pattern args} {
+    lsearch -glob -inline -index 1 {*}$args \
+        [dict get [$self parse-pamfile $fn] $typ] \
+        $pattern
+}
+
+method parse-pamfile fn {
+    set fh [open $fn]
+    scope_guard fh [list close $fh]
+
+    set lineNo 0
+    set result [dict create]
+    while {[gets $fh line] >= 0} {
+        incr lineNo
+        if {![regexp {^(\w+)\s+(\[.*?\]|\w+)\s+(\S.*)} $line -> \
+                 typ control modspec]} continue
+        dict lappend result $typ [list $control $modspec $lineNo]
+    }
+    set result
+}
+
+#========================================
+#
+# Make sure /admkit/pam_script/* is labeled as bin_t
+#
+target restorecon dependsTasks semanage check {
+    set contextTypes [struct::list mapfor fn [glob $pamScriptPath/*] {
+        list $fn [$self selinux-context-type $fn]
+    }]
+    
+    set badTypes [struct::list filterfor rec $contextTypes {
+        [lindex $rec end] ne "bin_t"
+    }]
+    
+    list [expr {$badTypes eq ""}] result $badTypes
+} action {
+    ** exec -ignorestderr restorecon -vr $pamScriptPath \
+        >@ stdout 2>@1
+}
+
+#========================================
+#
+# Make sure /admkit/pam_script/[^/]+ is registered as bin_t in selinux
+#
+
+variable selinuxFileContext \
+    /etc/selinux/targeted/contexts/files/file_contexts.local
+
+variable pamScriptPattern {/admkit/pam_script/[^/]+}
+
+target semanage check {
+    set found [$self find-line-by-prefix $pamScriptPattern $selinuxFileContext]
+    list [expr {$found ne ""}] found $found
+} action {
+    ** exec -ignorestderr semanage fcontext -a -t bin_t $pamScriptPattern \
+        >@ stdout 2>@1
+}
+
+method find-line-by-prefix {prefix fileName {trailingChars {" " "\t"}}} {
+    set len [string length $prefix]
+    foreach line [read_file_lines $fileName] {
+        if {[string equal -length $len $prefix $line]
+            && [string index $line $len] in $trailingChars
+        } {
+            return $line
+        }
+    }
+}
+
+method selinux-context-type fn {
+    lindex [split [exec stat -c %C $fn] :] 2
+}

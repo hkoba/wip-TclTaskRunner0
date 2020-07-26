@@ -55,15 +55,23 @@ snit::type TclTaskRunner {
     method verify args {
         foreach path $args {
             if {[file isdirectory $path]} {
-                $self verify {*}[lsort -dictionary \
-                                     [glob -nocomplain \
-                                          -directory $path *.tcltask]]
-                
-            } elseif {![file exists $path]} {
-                $self verify {*}[lsort -dictionary [glob -nocomplain $path]]
+                $self verify-file {*}[lsort -dictionary \
+                                          [glob -nocomplain \
+                                               -directory $path *.tcltask]]
+
+            } elseif {![file exists $path]
+                      && [set expanded [glob -nocomplain $path]] ne ""
+                  } {
+                $self verify-file {*}[lsort -dictionary $expanded]
             } else {
                 $self use $path
             }
+        }
+    }
+    
+    method verify-file args {
+        foreach fn $args {
+            $self use $fn
         }
     }
 

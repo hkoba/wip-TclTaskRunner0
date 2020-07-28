@@ -167,11 +167,7 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         set depList []
         foreach d [$self target depends $target] {
             lassign $d scope kind dep
-            lappend depList [if {$kind eq "file"} {
-                set dep
-            } else {
-                set d
-            }]
+            lappend depList $dep
         }
         list \
             \$@ $target \

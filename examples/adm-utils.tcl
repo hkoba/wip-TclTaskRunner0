@@ -11,6 +11,17 @@ proc check-group {group} {
 }
 
 
+proc passwd-uid-gid {{fn "/etc/passwd"}} {
+    set dict [dict create]
+    set fh [open $fn]
+    while {[gets $fh line] >= 0} {
+        lassign [split $line :] name x uid gid
+        dict set dict $name [list $uid $gid]
+    }
+    close $fh
+    set dict
+}
+
 proc query-systemctl {meth args} {
     set rc [catch {exec -ignorestderr systemctl -q $meth {*}$args} result]
     list [expr {$rc == 0}] result $result

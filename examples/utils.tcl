@@ -204,7 +204,7 @@ proc read_shell_env_file fn {
     while {[gets $fh line] >= 0} {
         if {[regexp ^\# $line]} continue
         if {![regexp {^(\w+)=(.*)} $line -> key value]} continue
-        dict set dict $key $value
+        dict set dict $key [if {[regexp ^\" $value]} { lindex $value 0 } else { set value }]
     }
     set dict
 }

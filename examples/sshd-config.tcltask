@@ -1,0 +1,83 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- coding: utf-8; mode: tcl -*-
+
+#========================================
+
+option -file [if {[file exists [set fn /etc/ssh/sshd_config.d/50-redhat.conf]]} {
+    set fn
+} else {
+    concat /etc/ssh/sshd_config
+}]
+option -port ""
+
+#========================================
+
+import {
+    read_file_with_lineno
+    append_file_line
+} from utils.tcl
+
+import { sed-apply-at } from sed-utils.tcl
+
+#========================================
+
+set MAIN_TARGETS {
+    {PasswordAuthentication no}
+
+    {ChallengeResponseAuthentication no}
+
+    {PermitEmptyPasswords no}
+}
+
+#========================================
+
+default target main dependsTasks [list {*}$MAIN_TARGETS Port]
+
+foreach t $MAIN_TARGETS {
+    target $t check {
+        is OK [$self test-config {*}$target]
+    } action {
+        set dict [lassign [$self test-config {*}$target] state]
+        $self update $state $target [dict get $dict current]
+    }
+}
+
+target Port check {
+    if {$options(-port) eq ""} {
+        list yes
+    } else {
+        is OK [$self test-config $target $options(-port)]
+    }
+} action {
+    set dict [lassign [$self test-config {*}$target] state]
+    $self update $state $target [dict get $dict current]
+}
+
+proc is {expect checkResult} {
+    set rest [lassign $checkResult state]
+    list [expr {$state eq $expect}] {*}$rest
+}
+
+method test-config {keyword value} {
+    set matchLines [lsearch -all -inline -index 1 -regexp \
+                        [read_file_with_lineno $options(-file)] \
+                        "^$keyword\\s+"]
+    if {[llength $matchLines] >= 2} {
+        error "Too many config for $keyword: $matchLines"
+    } elseif {$matchLines eq ""} {
+        list NOT_FOUND current {}
+    } elseif {[lindex $matchLines 0 1 1] ne $value} {
+        list NOT_MATCH current [lindex $matchLines 0]
+    } else {
+        list OK current [lindex $matchLines 0]
+    }
+}
+
+method {update NOT_FOUND} {target current} {
+    ** append_file_line $options(-file) $target
+}
+
+method {update NOT_MATCH} {target current} {
+    ** sed-apply-at $options(-file) [lindex $current 0] \
+        "s/^[lindex $target 0] .*/$target/" -i
+}

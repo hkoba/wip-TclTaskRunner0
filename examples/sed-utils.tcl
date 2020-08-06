@@ -10,6 +10,14 @@ namespace eval sed-utils {
         exec sed {*}$args "${lineNo}a $content" $fn
     }
 
+    proc sed-delete-at {fn lineNo args} {
+        exec sed {*}$args "${lineNo}d" $fn
+    }
+
+    proc sed-apply-at {fn lineNo command args} {
+        exec sed {*}$args -e "$lineNo $command" $fn
+    }
+
     namespace export *
 
     namespace current

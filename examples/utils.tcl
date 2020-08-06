@@ -183,6 +183,20 @@ proc read_file_lines {fn args} {
     set lines
 }
 
+# This lineno starts from 1. (sed compatibility)
+proc read_file_with_lineno {fn args} {
+    set fh [open $fn]
+    scope_guard fh [list close $fh]
+    if {[llength $args]} {
+        fconfigure $fh {*}$args
+    }
+    set lines {}
+    while {[gets $fh line] >= 0} {
+        lappend lines [list [incr lineNo] $line]
+    }
+    set lines
+}
+
 proc read_shell_env_file fn {
     set fh [open $fn]
     scope_guard fh [list close $fh]

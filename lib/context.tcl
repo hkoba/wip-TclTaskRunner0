@@ -165,6 +165,10 @@ snit::type ::TclTaskRunner::RunContext {
         expr {[llength $resList] ? [lindex $resList 0] : $default}
     }
 
+    method relative-filename scope {
+        $options(-registry) relative-filename [$scope cget -file]
+    }
+
     method {target try check} {targetTuple depth} {
         lassign $targetTuple scope - target
         set scriptType check
@@ -176,8 +180,17 @@ snit::type ::TclTaskRunner::RunContext {
         $self dputs $depth running $scriptType script\
             for $targetTuple = [string trim $script]
 
-        set resList [$self worker subst-apply-to $scope $target $depth $script]
-        
+        set rc [catch {
+            $self worker subst-apply-to $scope $target $depth $script
+        } resList optDict]
+
+        if {$rc == 1} {
+            dict set optDict -errorcode [list TCLTASK_ERROR check \
+                                            [dict get $optDict -errorcode]]
+            return -code TCL_ERROR  \
+                -options $optDict "\[[$self relative-filename $scope]:$target\] Runtime error from check script: $resList"
+        }
+
         $self dputs $depth ==> $resList
 
         set myState($targetTuple,$scriptType) $resList
@@ -209,7 +222,16 @@ snit::type ::TclTaskRunner::RunContext {
         
         set subst [$scope target subst $target $script]
 
-        set resList [$self worker apply-to $scope $target $depth $subst]
+        set rc [catch {
+            $self worker apply-to $scope $target $depth $subst
+        } resList optDict]
+
+        if {$rc == 1} {
+            dict set optDict -errorcode [list TCLTASK_ERROR check \
+                                            [dict get $optDict -errorcode]]
+            return -code TCL_ERROR  \
+                -options $optDict "\[[$self relative-filename $scope]:$target\] Runtime error from action script: $resList"
+        }
             
         $self dputs $depth ==> $resList
 

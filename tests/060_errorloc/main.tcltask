@@ -1,0 +1,22 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+default target main dependsTasks foo
+
+target foo check {
+    set unknownVariableFOO
+} action {
+    ** not reached
+}
+
+target bar check {
+    list 0
+} action {
+    set unknownVariableBAR
+}
+
+target baz check {
+    list 0
+} action {
+    ** set unknownVariableBAZ
+}

@@ -183,8 +183,27 @@ snit::typemethod TclTaskRunner toplevel args {
     set runner [$self runner]
     scope_guard runner [list $runner destroy]
 
-    $runner run $def {*}$args
+    set rc [catch {$runner run $def {*}$args} result optDict]
+    switch $rc {
+        0 - 2 {
+            return $result
+        }
+        1 {
+            if {[lindex [dict get $optDict -errorcode] 0] eq "TCLTASK_ERROR"} {
+                puts stderr "ttr: *** $result"
+            } else {
+                puts stderr "ttr: !!! Unknown internal error($optDict): $::errorInfo"
+            }
+            exit 1
+        }
+        3 - 4 - default {
+            return -code $rc $result
+        }
+    }
 }
+
+# snit::method TclTaskRunner handle-error {args} {
+# }
 
 if {![info level] && [info script] eq $::argv0} {
 

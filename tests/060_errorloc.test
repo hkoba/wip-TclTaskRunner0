@@ -1,0 +1,36 @@
+#!/usr/bin/env tclsh
+
+package require tcltest
+namespace import tcltest::*
+
+package require fileutil
+package require struct::list
+
+set testScript [file normalize [info script]]
+set testDir    [file rootname $testScript]
+set runnerFn   [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
+
+#========================================
+set THEME variable
+
+set ::env(PATH) [file dirname $runnerFn]:$::env(PATH)
+
+test $THEME-errorfrom-check "main.tcltask" -body {
+
+    exec [info nameofexecutable] $runnerFn $testDir/main.tcltask
+
+} -returnCodes error -result "ttr: *** \[main.tcltask:foo\] Runtime error from check script: can't read \"unknownVariableFOO\": no such variable"
+
+
+test $THEME-errorfrom-action "main.tcltask bar" -body {
+
+    exec [info nameofexecutable] $runnerFn $testDir/main.tcltask bar
+
+} -returnCodes error -result "ttr: *** \[main.tcltask:bar\] Runtime error from action script: can't read \"unknownVariableBAR\": no such variable"
+
+
+test $THEME-errorfrom-action** "main.tcltask baz" -body {
+
+    exec [info nameofexecutable] $runnerFn $testDir/main.tcltask baz
+
+} -returnCodes error -result "set unknownVariableBAZ\nttr: *** \[main.tcltask:baz\] Runtime error from action script: can't read \"unknownVariableBAZ\": no such variable"

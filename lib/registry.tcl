@@ -67,10 +67,9 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
         dict set myDict $relName $def
     }
 
-    method relative-name file {
-        set fullFn [file rootname \
-                        [fileutil::lexnormalize [file normalize $file]]]
-        set relFn [if {$options(-root-dir) eq ""} {
+    method relative-filename file {
+        set fullFn [fileutil::lexnormalize [file normalize $file]]
+        if {$options(-root-dir) eq ""} {
             set options(-root-dir) [file dirname $fullFn]/
             file tail $fullFn
         } elseif {[string equal -length [string length $options(-root-dir)] \
@@ -79,8 +78,11 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
         } else {
             error "Can't add a file from outside of\
              -root-dir $options(-root-dir): $fullFn, orig=$file"
-        }]
-
+        }
+    }
+    
+    method relative-name file {
+        set relFn [file rootname [$self relative-filename $file]]
         return @[string map {/ ::} $relFn]
     }
     

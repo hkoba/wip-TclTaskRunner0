@@ -32,7 +32,7 @@ variable EL_MAJOR_VERSION [switch [dict get $os_release ID] {
         }
     }
     centos {
-        dict get $os_release VERSION_ID
+        concat el[dict get $os_release VERSION_ID]
     }
     default {
         error "Can't find el version"

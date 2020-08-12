@@ -59,7 +59,7 @@ target {install stackdriver-agent} dependsFiles /etc/yum.repos.d/google-cloud-mo
 FILE /etc/yum.repos.d/google-cloud-monitoring.repo {} {
     ** write_file $target [string map [list @REPO@ $REPO_HOST @VER@ $EL_MAJOR_VERSION] {[google-cloud-monitoring]
 name=Google Cloud Monitoring Agent Repository
-baseurl=https://@REPO@/yum/repos/google-cloud-monitoring-@VER@-$basearch
+baseurl=https://@REPO@/yum/repos/google-cloud-monitoring-@VER@-$basearch-all
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1

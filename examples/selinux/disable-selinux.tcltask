@@ -9,7 +9,7 @@ option -config-only yes
 
 default target disable-selinux check {
 
-    set cmd [list | perl $options(-script-dir)/ensure-selinux-disabled.pl \
+    set cmd [list | env LANG=C perl $options(-script-dir)/ensure-selinux-disabled.pl \
                  -q /etc/selinux/config 2>@1]
 
     set config_result \
@@ -30,7 +30,7 @@ default target disable-selinux check {
 
 } action {
     
-    ** exec perl -i $options(-script-dir)/ensure-selinux-disabled.pl \
+    ** exec env LANG=C perl -i $options(-script-dir)/ensure-selinux-disabled.pl \
         /etc/selinux/config 2>@1
 
 } diag {

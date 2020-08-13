@@ -47,7 +47,14 @@ proc dict-cut {dictVar key args} {
     } else {
         error "No such key: $key"
     }
-    
+}
+
+proc dict-to-pairlist dict {
+    set result []
+    dict for {k v} $dict {
+        lappend result [list $k $v]
+    }
+    set result
 }
 
 # dictA - (dictB items which found in dictA too)

@@ -2,20 +2,20 @@
 
 namespace eval sed-utils {
     
-    proc sed-insert-before {fn lineNo content args} {
-        exec sed {*}$args "${lineNo}i $content" $fn
+    proc sed-insert-before {fn address content args} {
+        ** exec sed {*}$args "${address}i $content" $fn
     }
 
-    proc sed-append-after {fn lineNo content args} {
-        exec sed {*}$args "${lineNo}a $content" $fn
+    proc sed-append-after {fn address content args} {
+        ** exec sed {*}$args "${address}a $content" $fn
     }
 
-    proc sed-delete-at {fn lineNo args} {
-        exec sed {*}$args "${lineNo}d" $fn
+    proc sed-delete-at {fn address args} {
+        ** exec sed {*}$args "${address}d" $fn
     }
 
-    proc sed-apply-at {fn lineNo command args} {
-        exec sed {*}$args -e "$lineNo $command" $fn
+    proc sed-apply-at {fn address command args} {
+        ** exec sed {*}$args -e "$address $command" $fn
     }
 
     namespace export *

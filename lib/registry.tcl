@@ -88,6 +88,7 @@ snit::type ::TclTaskRunner::TaskSetRegistry {
     
     method {package require} {name args} {
         if {[dict exists $myPackageDict $name]
+            && $args ne ""
             && [package vsatisfies [dict get $myPackageDict $name] {*}$args]} {
             return [dict get $myPackageDict $name]
         }

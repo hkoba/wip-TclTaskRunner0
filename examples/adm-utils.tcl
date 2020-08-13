@@ -3,11 +3,11 @@
 namespace eval adm-utils {
 
 proc check-user {user} {
-    file-has ^${user}: /etc/passwd
+    ::utils::file-has ^${user}: /etc/passwd
 }
 
 proc check-group {group} {
-    file-has ^${group}: /etc/group
+    ::utils::file-has ^${group}: /etc/group
 }
 
 

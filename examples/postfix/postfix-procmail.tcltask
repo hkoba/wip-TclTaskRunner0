@@ -1,0 +1,11 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- coding: utf-8; mode: tcl -*-
+
+variable mailbox_command {/usr/bin/procmail -a "$EXTENSION"}
+
+default target mailbox_command check {
+    set got [exec postconf -h $target]
+    list [expr {$got eq [set $target]}] got $got
+} action {
+    ** exec postconf -e $target=[set $target]
+}

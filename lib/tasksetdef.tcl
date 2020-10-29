@@ -62,6 +62,9 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         if {$name eq ""} {
             set name $options(-default)
         }
+        if {![dict exists $myDeps $name]} {
+            error "Unknown target: $name\nKnown targets are: [dict keys $myDeps]"
+        }
         set dict [dict get $myDeps $name]
         list $self [dict get $dict kind] $name
     }

@@ -284,7 +284,12 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         if {[$myRegistry exists $name]} {
             $myRegistry get $name
         } else {
-            $self taskset define file $fn -depth $depth
+            set rc [catch {
+                $self taskset define file $fn -depth $depth
+            } error]
+            if {$rc} {
+                error "Can't load tcltask $fn: $error"
+            }
         }
     }
 
@@ -347,7 +352,15 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             $self dputs $depth [$def cget -name] => [$def dump]
         }
 
-        $self taskset finalize $def {*}$args
+        set rc [catch {$self taskset finalize $def {*}$args} error]
+        if {$rc} {
+            if {$options(-debug)} {
+                error "Error found in [$def cget -name]: $error\n\
+                Dump: [$def dump]\n"
+            } else {
+                error $error
+            }
+        }
 
         if {$options(-debug) >= 3} {
             $self dputs $depth ==> [$def dump]

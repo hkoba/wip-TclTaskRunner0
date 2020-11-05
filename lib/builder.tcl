@@ -281,9 +281,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     method {taskset ensure-loaded} {fn {depth 0}} {
         set name [$myRegistry relative-name $fn]
-        if {[$myRegistry exists $name]} {
-            $myRegistry get $name
-        } else {
+        if {![$myRegistry exists $name]} {
             set rc [catch {
                 $self taskset define file $fn -depth $depth
             } error]
@@ -291,6 +289,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                 error "Can't load tcltask $fn: $error"
             }
         }
+        $myRegistry get $name
     }
 
     method {taskset define file} {origFn args} {

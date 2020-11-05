@@ -20,6 +20,7 @@ snit::type ::TclTaskRunner::RunContext {
     }
 
     method run {scope {targetOrMethod ""} args} {
+        $self dputs 0 entering $scope target $targetOrMethod {*}$args
         if {[info commands $scope] eq "" && [regexp ^@ $scope]
             && $options(-registry) ne ""} {
             set scope [$options(-registry) get $scope]

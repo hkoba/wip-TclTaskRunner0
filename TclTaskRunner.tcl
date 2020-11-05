@@ -95,9 +95,9 @@ snit::type TclTaskRunner {
             if {[catch {$self run $taskFn} result resOpts]} {
                 if {[lindex [set ec [dict-default $resOpts -errorcode]] 0]
                     eq "failed-target"} {
-                    $type alert $result
+                    $type alert "failed-target $taskFn: $result"
                 } else {
-                    puts stderr $::errorInfo
+                    puts stderr "failed-target $taskFn\n$::errorInfo"
                 }
                 return NG
             }
@@ -192,7 +192,7 @@ snit::typemethod TclTaskRunner toplevel args {
             if {[lindex [dict get $optDict -errorcode] 0] eq "TCLTASK_ERROR"} {
                 puts stderr "ttr: *** $result"
             } else {
-                puts stderr "ttr: !!! Unknown internal error($optDict): $::errorInfo"
+                puts stderr "ttr: !!! Unknown internal error in $taskFile: ($optDict): stacktrace: $::errorInfo"
             }
             exit 1
         }

@@ -286,7 +286,11 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
                 $self taskset define file $fn -depth $depth
             } error]
             if {$rc} {
-                error "Can't load tcltask $fn: $error"
+                set diag "Can't load tcltask $fn: $error"
+                if {$options(-debug)} {
+                    append diag "\n==Original backtrace==\n$::errorInfo"
+                }
+                error $diag
             }
         }
         $myRegistry get $name

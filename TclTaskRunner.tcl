@@ -162,8 +162,9 @@ snit::typemethod TclTaskRunner oneshot {varName script args} {
 
 snit::typemethod TclTaskRunner toplevel args {
     set self ::dep
-    $type $self -debug [default ::env(DEBUG) 0]\
-        {*}[$type parse-opts args]\
+
+    set opts [list -debug [default ::env(DEBUG) 0]]
+    lappend opts {*}[$type parse-opts args]
 
     if {[llength $args]} {
         set args [lassign $args taskFile]
@@ -171,8 +172,8 @@ snit::typemethod TclTaskRunner toplevel args {
         set taskFile main.tcltask
     }
 
-    $self configurelist [$type parse-opts args]
-    
+    $type $self {*}$opts {*}[$type parse-opts args]
+        
     if {![file exists $taskFile]} {
         puts stderr [$self usage]
         exit 1

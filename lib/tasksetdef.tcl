@@ -23,6 +23,23 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         dict exists $ourKnownKeys $name
     }
 
+    typevariable ourKnownAliases [dict create let values]
+    typemethod knownAliases {name {realNameVar ""}} {
+        if {$realNameVar ne ""} {
+            upvar 1 $realNameVar realVar
+        }
+        if {![dict exists $ourKnownAliases $name]} {
+            if {$realNameVar ne "" && [info exists realVar]} {
+                unset realVar
+            }
+            return 0
+        }
+        if {$realNameVar ne ""} {
+            set realVar [dict get $ourKnownAliases $name]
+        }
+        return 1
+    }
+
     variable myExtern [dict create]
 
     variable myDeps [dict create]

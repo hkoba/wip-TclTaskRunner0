@@ -210,15 +210,36 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     #
     method {precheck target} {def targetName args} {
         set dict [dict create]
+        set seen [dict create]
         foreach {name value} $args {
-            if {![$myTaskSetType knownKey $name]} {
+
+            if {[$myTaskSetType knownAliases $name alias]} {
+
+                dict lappend seen $name $alias
+                
+            } elseif {[$myTaskSetType knownKey $name]} {
+               
+                dict lappend seen $name $name
+
+            } else {
                 error "Unknown item '$name' in target '$targetName' \
-                file '[$def cget -file]'"
+                             file '[$def cget -file]'"
             }
-            if {[dict exists $dict $name]} {
-                error "Duplicate item '$name' in target '$targetName' \
-                file '[$def cget -file]'"
+
+            if {[llength [set dup [dict get $seen $name]]] >= 2} {
+                if {[lindex $dup 0] eq [lindex $dup 1]} {
+                    error "Duplicate item '$name' in target '$targetName' \
+                             file '[$def cget -file]'"
+                } else {
+                    error "Conflicting item [join $dup] in target '$targetName'\
+                             file '[$def cget -file]'"
+                }
             }
+
+            if {[info exists alias]} {
+                set name $alias
+            }
+
             dict set dict $name $value
         }
         set kind [if {[dict exists $dict check]} {

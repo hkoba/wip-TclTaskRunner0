@@ -9,3 +9,12 @@ default target main values {
 } action {
     ** set ::theVar $x$y
 }
+
+target test-let let {
+    x AAA
+    y BBB
+} check {
+    expr {[info exists ::theVar] && $::theVar eq "$x$y"}
+} action {
+    ** set ::theVar $x$y
+}

@@ -20,3 +20,9 @@ test $THEME-exec-1 "exec TclTaskRunner.tcl main.tcltask" -body {
     exec [info nameofexecutable] $runnerFn $testDir/main.tcltask
 
 } -result {set ::theVar FOOBAR}
+
+test $THEME-exec-1 "exec TclTaskRunner.tcl main.tcltask test-let" -body {
+
+    exec [info nameofexecutable] $runnerFn $testDir/main.tcltask test-let
+
+} -result {set ::theVar AAABBB}

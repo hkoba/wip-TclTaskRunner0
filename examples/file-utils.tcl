@@ -2,7 +2,7 @@
 
 namespace eval file-utils {
 
-    proc check-dir-spec {dir want} {
+    proc check-dir-spec {dir want {diffOnly ""}} {
 	if {![file exists $dir]} {
 	    return 0
 	}
@@ -21,10 +21,14 @@ namespace eval file-utils {
 	    lappend diff $k [dict get $want $k]
 	}
 
-	list [expr {[llength $diff] == 0}] {*}$diff
+        if {$diffOnly ne ""} {
+            set diff
+        } else {
+            list [expr {[llength $diff] == 0}] {*}$diff
+        }
     }
     
-    proc check-file-spec {file want} {
+    proc check-file-spec {file want {diffOnly ""}} {
 	if {![file exists $file]} {
 	    return 0
 	}
@@ -40,7 +44,11 @@ namespace eval file-utils {
 	    lappend diff $k [dict get $want $k]
 	}
 
-	list [expr {[llength $diff] == 0}] {*}$diff
+        if {$diffOnly ne ""} {
+            set diff
+        } else {
+            list [expr {[llength $diff] == 0}] {*}$diff
+        }
     }
 
     proc apply-dir-spec {dir spec {resVar ""}} {

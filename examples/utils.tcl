@@ -190,6 +190,16 @@ proc read_file_lines {fn args} {
     set lines
 }
 
+proc read_file_no_comments {fn args} {
+    set lines []
+    foreach line [read_file_lines $fn {*}$args] {
+        if {![regexp {\S} $line]} continue
+        if {[regexp ^\# $line]} continue
+        lappend lines $line
+    }
+    set lines 
+}
+
 # This lineno starts from 1. (sed compatibility)
 proc read_file_with_lineno {fn args} {
     set fh [open $fn]

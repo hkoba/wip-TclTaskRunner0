@@ -92,27 +92,33 @@ snit::type ::TclTaskRunner::RunContext {
         }
         
         set thisMtime [$self mtime $targetTuple $depth]
+        $self dputs $depth dependency-check-for $targetTuple thisMtime $thisMtime
 
         foreach pred $depends {
             if {$thisMtime < $predMtime($pred)} {
+                $self dputs $depth pred-changed: $pred predMtime $predMtime($pred)
                 lappend changed $pred
             } elseif {$predMtime($pred) == -Inf && $thisMtime != -Inf} {
                 $self dputs $depth pred is not changed but infinitely old: $pred
                 lappend changed $pred
             } else {
-                $self dputs $depth Not changed $pred \
-                    mtime $predMtime($pred) $targetTuple $thisMtime
+                $self dputs $depth Not-changed $pred \
+                    predMtime $predMtime($pred)
             }
         }
 
         set myVisited($targetTuple) 2
         
-        if {[llength $changed]
-            || ($depends eq "" && $thisMtime == -Inf)} {
+        if {[llength $changed]} {
+            $self dputs $depth because-of changed $changed
+            $self target try action $targetTuple $depth
+        } elseif {($depends eq "" && $thisMtime == -Inf)} {
+            $self dputs $depth because-of thisMtime $thisMtime
             $self target try action $targetTuple $depth
         } else {
             $self dputs $depth No need to update $target
         }
+        
     }
     
     method {fake mtime} targetTuple {
@@ -141,7 +147,7 @@ snit::type ::TclTaskRunner::RunContext {
             } elseif {[$scope file exists $target]} {
                 return -Inf
             } else {
-                error "Unknown node or file: $target"
+                error "Dependency target file not found: $target"
             }
         } else {
             $self target try check $targetTuple $depth
@@ -171,11 +177,13 @@ snit::type ::TclTaskRunner::RunContext {
     }
 
     method {target try check} {targetTuple depth} {
-        lassign $targetTuple scope - target
+        lassign $targetTuple scope kind target
         set scriptType check
         set script [dict-default [$scope target get $target] $scriptType]
         if {$script eq ""} {
-            $self dputs $depth No $scriptType script for $targetTuple
+            set frame [info frame -1]
+            $self dputs $depth No check script for $kind $targetTuple \
+                caller [list [dict get $frame proc] line [dict get $frame line]]
             return
         }
         $self dputs $depth running $scriptType script\

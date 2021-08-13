@@ -1,0 +1,22 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+# Use of [file copy] is a common pitfall because it preserves mtime while copying.
+# Use {** exec cp -v $< $target} instead.
+
+default FILE bar/baz.txt {foo.txt bar} {
+    ** file copy $< $target
+    ** file mtime $target [clock seconds]
+}
+
+FILE bar {} {
+    ** exec mkdir -p $target
+}
+
+method clean {} {
+    # ** file delete {*}[$self target list]
+    foreach f [$self target list] {
+        if {![file exists $f]} continue
+        ** file delete $f
+    }
+}

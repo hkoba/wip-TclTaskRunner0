@@ -1,0 +1,52 @@
+#!/usr/bin/env tclsh
+
+package require fileutil
+
+package require tcltest
+namespace import tcltest::*
+
+set testScript [file normalize [info script]]
+set testDir    [file rootname $testScript]
+set runnerFn   [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
+
+#========================================
+
+set THEME filetarget
+
+test load "Make sure it is loadable." {
+    source $runnerFn
+} ""
+
+#----------------------------------------
+
+cd /
+
+test $THEME-exec-1 "exec main.tcltask clean" -body {
+
+    exec [info nameofexecutable] $runnerFn \
+        $testDir/main.tcltask clean
+
+    file exists $testDir/prog
+
+} -result 0
+
+test $THEME-exec-2 "exec main.tcltask" -body {
+
+    exec [info nameofexecutable] $runnerFn $testDir/main.tcltask
+
+} -match regexp -result {exec mkdir -p bar
+file copy foo.txt bar/baz.txt
+file mtime bar/baz.txt \d+}
+
+test $THEME-exec-result "exec main.tcltask" -body {
+    set result []
+    set targetFn $testDir/bar/baz.txt
+    lappend result [file exists $targetFn]
+    exec [info nameofexecutable] $runnerFn --silent $testDir/main.tcltask clean
+    lappend result [file exists $targetFn]
+
+} -result {1 0}
+
+#----------------------------------------
+
+cleanupTests

@@ -58,42 +58,44 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     variable myPkgDepth 0
     variable mySourceDepth 0
+    variable myTargetDecls []
+
     method is-toplevel {} {expr {$myPkgDepth == 0 && $mySourceDepth == 0}}
 
+    method expand-declaration {keyword} {
+        interp alias $myInterp $keyword
+    }
+    method define-declaration {varName keyword as args} {
+        interp alias $myInterp $keyword \
+            {} $self {*}$args $varName
+        set keyword
+    }
+    method define-declaration!! {args} {
+        set keyword [$self define-declaration {*}$args]
+        lappend myTargetDecls $keyword
+        set keyword
+    }
+
     method prepare-context varName {
-        interp alias $myInterp default \
-            {} $self annotate default $varName
-        interp alias $myInterp public \
-            {} $self annotate public $varName
 
-        interp alias $myInterp target \
-            {} $self target add $varName
-        interp alias $myInterp TARGET \
-            {} $self target add $varName
-        
-        interp alias $myInterp target-file \
-            {} $self target-file add $varName
-        interp alias $myInterp FILE \
-            {} $self target-file add $varName
-        
-        interp alias $myInterp variable \
-            {} $self variable add $varName
-        interp alias $myInterp proc \
-            {} $self proc add $varName
+        $self define-declaration $varName default => annotate default
+        $self define-declaration $varName public  => annotate public
 
-        interp alias $myInterp option \
-            {} $self misc add option $varName
-        interp alias $myInterp method \
-            {} $self misc add method $varName
+        $self define-declaration!! $varName target  => target add
+        $self define-declaration!! $varName TARGET  => target add
 
-        interp alias $myInterp use \
-            {} $self declare use $varName
-        
-        interp alias $myInterp import \
-            {} $self declare import $varName
-        
-        interp alias $myInterp package \
-            {} $self declare package $varName
+        $self define-declaration!! $varName target-file => target-file add
+        $self define-declaration!! $varName FILE        => target-file add
+
+        $self define-declaration $varName variable    => variable add
+        $self define-declaration $varName proc        => proc add
+
+        $self define-declaration $varName option      => misc add option
+        $self define-declaration $varName method      => misc add method
+
+        $self define-declaration $varName use         => declare use
+        $self define-declaration $varName import      => declare import
+        $self define-declaration $varName package     => declare package
     }
 
     method {declare use} {varName name args} {
@@ -187,11 +189,13 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         return $baseDir/$rootName.tcltask
     }
 
-    method {target-file add} {varName targetName dependsFiles action} {
+    method {target-file add} {varName targetName dependsFiles action args} {
         upvar 1 $varName def
-        set dict [dict create \
-                      public no \
-                      dependsFiles $dependsFiles action $action]
+        lassign [$self precheck target $def $targetName \
+                     dependsFiles $dependsFiles action $action \
+                     {*}$args] \
+            kind dict
+        dict-set-default dict public no
         $def file add $targetName $dict
         set targetName
     }
@@ -285,15 +289,16 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     }
 
     method {annotate public} {varName kind targetName args} {
-        if {$kind ne "target"} {error "Invalid kind: $kind"}
-        uplevel 1 [list $self target add $varName $targetName {*}$args \
+        if {$kind ni $myTargetDecls} {error "Invalid kind: $kind"}
+        uplevel 1 [list {*}[$self expand-declaration $kind] $targetName {*}$args \
                        public yes]
     }
 
     method {annotate default} {varName kind targetName args} {
-        if {$kind ne "target"} {error "Invalid kind: $kind"}
-        uplevel 1 [list $self target add $varName $targetName {*}$args \
+        if {$kind ni $myTargetDecls} {error "Invalid kind: $kind"}
+        set cmd [list {*}[$self expand-declaration $kind] $targetName {*}$args \
                        public yes]
+        uplevel 1 $cmd
         upvar 1 $varName def
         $def configure -default $targetName
     }

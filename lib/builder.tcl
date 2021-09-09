@@ -84,7 +84,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         $self define-declaration!! $varName target  => target add
         $self define-declaration!! $varName TARGET  => target add
 
-        $self define-declaration!! $varName target-file => target-file add
+        $self define-declaration!! $varName target-file => target add-kind file
         $self define-declaration!! $varName FILE        => target-file add
 
         $self define-declaration $varName variable    => variable add
@@ -191,7 +191,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     method {target-file add} {varName targetName dependsFiles action args} {
         upvar 1 $varName def
-        lassign [$self precheck target $def $targetName \
+        lassign [$self precheck target file $def $targetName \
                      dependsFiles $dependsFiles action $action \
                      {*}$args] \
             kind dict
@@ -201,8 +201,13 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     }
 
     method {target add} {varName targetName args} {
+        upvar 1 $varName $varName
+        $self target add-kind task $varName $targetName {*}$args
+    }
+
+    method {target add-kind} {kind varName targetName args} {
         upvar 1 $varName def
-        lassign [$self precheck target $def $targetName {*}$args] \
+        lassign [$self precheck target task $def $targetName {*}$args] \
             kind dict
         dict-set-default dict public no
         $def $kind add $targetName $dict
@@ -212,7 +217,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     #
     # Keyword dictionary of target definition.
     #
-    method {precheck target} {def targetName args} {
+    method {precheck target} {kind def targetName args} {
         set dict [dict create]
         set seen [dict create]
         foreach {name value} $args {
@@ -246,12 +251,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
             dict set dict $name $value
         }
-        set kind [if {[dict exists $dict check]} {
-            value task
-        } else {
-            value file
-        }]
-        
+
         list $kind $dict
     }
 

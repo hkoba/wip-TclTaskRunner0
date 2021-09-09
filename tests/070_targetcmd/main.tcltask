@@ -1,0 +1,14 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; coding: utf-8 -*-
+
+default target all action {
+    puts "$::foo $::bar"
+}
+
+all depends target foo action {
+    set ::foo FOO
+}
+
+all depends target bar action {
+    set ::bar BAR
+}

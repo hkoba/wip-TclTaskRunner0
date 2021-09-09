@@ -212,8 +212,10 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         dict-set-default dict public no
         $def $kind add $targetName $dict
 
-        interp alias $myInterp $targetName \
-            {} $self target configure $varName $targetName
+        if {[$myInterp eval [list info commands $targetName]] eq ""} {
+            interp alias $myInterp $targetName \
+                {} $self target configure $varName $targetName
+        }
 
         set targetName
     }

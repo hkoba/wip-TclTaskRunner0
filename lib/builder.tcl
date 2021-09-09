@@ -211,9 +211,30 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             kind dict
         dict-set-default dict public no
         $def $kind add $targetName $dict
+
+        interp alias $myInterp $targetName \
+            {} $self target configure $varName $targetName
+
         set targetName
     }
-    
+
+
+    method {target configure} {varName targetName method kind args} {
+        upvar 1 $varName def
+        if {$method ne "depends"} {
+            error "Not yet implemented: $method"
+        }
+        set value [if {$kind eq "target"} {
+            $self target add $varName {*}$args
+        } elseif {[llength $args] == 1} {
+            lindex $args 0
+        } else {
+            error "Not yet implemented: $targetName $name $kind $args"
+        }]
+
+        $def target lappend $method $targetName $value
+    }
+
     #
     # Keyword dictionary of target definition.
     #
@@ -407,6 +428,15 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         #     puts "firstTarget $firstTarget"
         #     $def configure -default $firstTarget
         # }
+        foreach name [dict keys $taskDict] {
+            dict update taskDict $name task {
+                if {[dict exists $task depends]} {
+                    dict lappend task dependsTasks \
+                        {*}[dict get $task depends]
+                    dict unset task depends
+                }
+            }
+        }
         dict for {name task} $taskDict {
             set deps []
             foreach depTask [dict-default $task dependsTasks] {

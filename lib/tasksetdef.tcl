@@ -122,6 +122,17 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         dict-default [dict get $myDeps $name] depends []
     }
 
+    method {target lappend depends} {name args} {
+        if {![dict exists $myDeps $name]} {
+            error "No such target: $name"
+        }
+        dict update myDeps $name target {
+            dict update target depends listVar {
+                lappend listVar {*}$args
+            }
+        }
+    }
+
     method {extern exists} name {
         dict exists $myExtern $name
     }

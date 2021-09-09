@@ -11,7 +11,7 @@ default target etc-git dependsTasks /etc/.gitignore check {
     if {[exec id -u] != 0} {
         error "Please run as root!"
     }
-    ** exec git init --shared=0600 /etc
+    ** exec git init -b main --shared=0600 /etc
 }
 
 target /etc/.gitignore dependsFiles {} action {

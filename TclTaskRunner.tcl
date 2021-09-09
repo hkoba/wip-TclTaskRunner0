@@ -29,6 +29,7 @@ snit::type TclTaskRunner {
 
     option -report-command []
 
+    option -dump no
     typevariable ourTaskSetType TaskSetDefinition
 
     constructor args {
@@ -180,6 +181,11 @@ snit::typemethod TclTaskRunner toplevel args {
     }
 
     set def [$self use $taskFile]
+
+    if {[$self cget -dump]} {
+        puts [$def dump]
+        return
+    }
 
     set runner [$self runner]
     scope_guard runner [list $runner destroy]

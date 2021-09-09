@@ -95,12 +95,13 @@ snit::type TclTaskRunner {
 
     method run-all args {
         foreach taskFn $args {
+            $self dputs 0 "# Running $taskFn..."
             if {[catch {$self run $taskFn} result resOpts]} {
                 if {[lindex [set ec [dict-default $resOpts -errorcode]] 0]
                     eq "failed-target"} {
                     $type alert "failed-target $taskFn: $result"
                 } else {
-                    puts stderr "failed-target $taskFn\n$::errorInfo"
+                    puts stderr "\n\nfailed-target $taskFn\n$::errorInfo"
                 }
                 return NG
             }

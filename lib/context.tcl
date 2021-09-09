@@ -89,6 +89,7 @@ snit::type ::TclTaskRunner::RunContext {
                 error "Task $pred and $targetTuple are circularly defined!"
             }
             set predMtime($pred) [$self mtime $pred $depth]
+            $self dputs $depth predMtime $pred => $predMtime($pred)
         }
         
         set thisMtime [$self mtime $targetTuple $depth]
@@ -218,7 +219,7 @@ snit::type ::TclTaskRunner::RunContext {
     }
     
     method {target try action} {targetTuple depth} {
-        lassign $targetTuple scope - target
+        lassign $targetTuple scope kind target
 
         if {[is-ok-or [$self target try check $targetTuple $depth] no]} return
 
@@ -245,10 +246,17 @@ snit::type ::TclTaskRunner::RunContext {
         $self dputs $depth ==> $resList
 
         set myState($targetTuple,$scriptType) $resList
-            
+
         set postCheckRes [$self target try check $targetTuple $depth]
+
+        if {$kind eq "task" && [dict-default [$scope target get $target] check] eq ""} {
+            $self dputs $depth touch $targetTuple
+            $self touch mtime $targetTuple
+        } else {
+            $self dputs $depth No need to fake mtime
+        }
+
         if {![is-ok-or $postCheckRes yes]} {
-                
             if {$options(-dry-run)} {
                 # postcheck usually fail when dry-run mode.
 

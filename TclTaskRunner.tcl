@@ -30,6 +30,8 @@ snit::type TclTaskRunner {
     option -report-command []
 
     option -dump no
+    option -show-dependency no
+
     typevariable ourTaskSetType TaskSetDefinition
 
     constructor args {
@@ -184,6 +186,19 @@ snit::typemethod TclTaskRunner toplevel args {
 
     if {[$self cget -dump]} {
         puts [$def dump]
+        return
+    }
+
+    if {[$self cget -show-dependency]} {
+        set target [if {$args ne ""} {
+            lindex $args 0
+        } else {
+            $def cget -default
+        }]
+        if {![$def target exists $target]} {
+            error "No such target in $taskFile: $target"
+        }
+        puts "target $target depends: [$def target depends $target]"
         return
     }
 

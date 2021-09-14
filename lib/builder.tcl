@@ -231,7 +231,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         } elseif {[llength $args] == 1} {
             lindex $args 0
         } else {
-            error "Not yet implemented: $targetName $name $kind $args"
+            error "Not yet implemented target $kind: $targetName $method $kind $args"
         }]
 
         $def target lappend $method $targetName $value

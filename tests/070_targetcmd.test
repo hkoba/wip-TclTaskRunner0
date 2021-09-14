@@ -20,3 +20,14 @@ test $THEME-exec-1 "exec TclTaskRunner.tcl main.tcltask" -body {
     exec [info nameofexecutable] $runnerFn --silent $testDir/main.tcltask
 
 } -result {FOO BAR}
+
+test $THEME-clean "exec TclTaskRunner.tcl main.tcltask clean removes bar" -body {
+
+    exec [info nameofexecutable] $runnerFn --silent $testDir/main.tcltask clean
+
+    file exists $testDir/bar
+
+} -result 0
+
+cleanupTests
+

@@ -1,14 +1,24 @@
 #!/usr/bin/env TclTaskRunner.tcl
 # -*- mode: tcl; coding: utf-8 -*-
 
+package require fileutil
+
 default target all action {
-    puts "$::foo $::bar"
+    puts "$::foo [fileutil::cat bar]"
 }
 
 all depends target foo action {
     set ::foo FOO
 }
 
-all depends target bar action {
-    set ::bar BAR
+all depends FILE bar {} {
+    ** ::fileutil::writeFile $target BAR
+}
+
+method clean {} {
+    # ** file delete {*}[$self target list]
+    foreach f [$self target list] {
+        if {![file exists $f]} continue
+        ** file delete $f
+    }
 }

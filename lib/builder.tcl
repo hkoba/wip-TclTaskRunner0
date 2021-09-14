@@ -226,12 +226,16 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         if {$method ne "depends"} {
             error "Not yet implemented: $method"
         }
-        set value [if {$kind eq "target"} {
-            $self target add $varName {*}$args
-        } elseif {[llength $args] == 1} {
+
+        set value [if {[llength $args] == 1} {
             lindex $args 0
+        } elseif {$kind ni $myTargetDecls} {
+            error "Invalid kind: $kind"
         } else {
-            error "Not yet implemented target $kind: $targetName $method $kind $args"
+            set cmd [list {*}[$self expand-declaration $kind] \
+                          {*}$args]
+
+            uplevel 1 $cmd
         }]
 
         $def target lappend $method $targetName $value

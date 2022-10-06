@@ -1,0 +1,71 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- coding: utf-8; mode: tcl -*-
+
+import * from utils.tcl
+import * from adm-utils.tcl
+
+# https://dl.google.com/cloudagents/add-logging-agent-repo.sh
+
+# https://dl.google.com/cloudagents/install-monitoring-agent.sh
+# https://dl.google.com/cloudagents/install-logging-agent.sh
+
+default target google-cloud-ops-agent dependsTasks {
+    {install google-cloud-ops-agent}
+} check {
+    query-systemctl is-enabled $target 2>@1
+} action {
+    ** exec systemctl enable --now $target >@ stdout 2>@1
+}
+
+#----------------------------------------
+
+variable REPO_FILE /etc/yum.repos.d/google-cloud-ops-agent.repo
+
+variable REPO_HOST packages.cloud.google.com
+
+set os_release [::utils::read_shell_env_file /etc/os-release]
+
+variable EL_MAJOR_VERSION [switch [dict get $os_release ID] {
+    fedora {
+        if {[dict get $os_release VERSION_ID] >= 28} {
+            list el8
+        } else {
+            error "Fedora version too old!"
+        }
+    }
+    centos {
+        concat el[dict get $os_release VERSION_ID]
+    }
+    default {
+        error "Can't find el version"
+    }
+}]
+
+#========================================
+
+target {install google-cloud-ops-agent} dependsFiles $REPO_FILE check {
+    query-rpm [lindex $target end]
+} action {
+    ** exec dnf install -y [lindex $target end] \
+        google-cloud-ops-agent \
+        >@ stdout 2>@1
+}
+
+FILE $REPO_FILE {} {
+    ** write_file $target [string map [list @REPO@ $REPO_HOST @VER@ $EL_MAJOR_VERSION] {[google-cloud-ops-agent]
+name=Google Cloud Ops Agent Repository
+baseurl=https://@REPO@/yum/repos/google-cloud-ops-agent-@VER@-$basearch-all
+autorefresh=0
+enabled=1
+type=rpm-md
+gpgcheck=1
+repo_gpgcheck=0
+gpgkey=https://@REPO@/yum/doc/yum-key.gpg
+       https://@REPO@/yum/doc/rpm-package-key.gpg
+}]
+}
+
+proc query-rpm package {
+    set rc [catch {exec rpm -q $package} result]
+    list [expr {$rc == 0}] result $result
+}

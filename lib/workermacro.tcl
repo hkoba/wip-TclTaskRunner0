@@ -7,6 +7,7 @@ snit::macro ::TclTaskRunner::use_worker {} {
     option -isolate yes
 
     option -dry-run-marker **
+    option -run-command RUN
 
     variable myWorker ""
     variable myInterp ""
@@ -61,9 +62,23 @@ snit::macro ::TclTaskRunner::use_worker {} {
         interp alias $myInterp $options(-dry-run-marker) \
             {} $self worker traced
 
+        if {$options(-run-command) ne ""} {
+            interp alias $myInterp $options(-run-command) \
+                {} $self worker run
+        }
+
         if {$options(-debug) >= 2} {
             $self dputsRaw "# == worker sync end =="
         }
+    }
+
+    method {worker run} args {
+        if {! $options(-silent)} {
+            puts $options(-log-fh) $args
+        }
+        if {$options(-dry-run)} return
+        interp eval $myInterp \
+            [list exec -ignorestderr {*}$args 2>@ stderr >@ stdout]
     }
 
     method {worker traced} args {

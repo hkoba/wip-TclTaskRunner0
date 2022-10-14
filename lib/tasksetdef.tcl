@@ -4,6 +4,7 @@
 package require snit
 package require fileutil
 package require struct::list
+package require dicttool
 
 # This type implements $def in TclTaskRunner.tcl
 # and also is called as $scope in RunContext.
@@ -13,7 +14,8 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
     option -file ""
     option -default ""
     option -depth 0
-    
+    option -runtime-options {}
+
     typevariable ourKnownKeys [set knownKeys [::TclTaskRunner::enum_dict \
                                                   kind  public check action \
                                                   values \
@@ -74,7 +76,7 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         list deps $myDeps methods $myMethods procs $myProcs extern $myExtern
     }
 
-    method deps {} {set myDeps}
+    method deps {} {dict print $myDeps}
     method {target spec} name {
         if {$name eq ""} {
             set name $options(-default)
@@ -206,9 +208,9 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
             \$^ [lrange $depList 0 end]
     }
 
-    typemethod ensure-instance ns {
+    typemethod ensure-instance {ns args} {
         if {[info commands ${ns}::instance] ne ""} return
-        ${ns}::runtime create ${ns}::instance
+        ${ns}::runtime create ${ns}::instance {*}$args
         namespace eval ${ns}::runtime::Snit_inst1\
             [list namespace path ${ns}::runtime]
         return ${ns}::instance
@@ -236,7 +238,7 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
             }
         }
 
-        append script [list $type ensure-instance $selfns]\n
+        append script [list $type ensure-instance $selfns {*}$options(-runtime-options)]\n
 
         set script
     }

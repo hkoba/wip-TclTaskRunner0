@@ -3,6 +3,7 @@
 
 package require snit
 package require fileutil
+package require struct::list
 
 namespace eval TclTaskRunner {
     ::variable scriptFn [::fileutil::fullnormalize [info script]]
@@ -45,8 +46,8 @@ snit::type TclTaskRunner {
         $self worker init
     }
 
-    method use scriptFileName {
-        $myBuilder taskset ensure-loaded $scriptFileName
+    method use {scriptFileName args} {
+        $myBuilder taskset ensure-loaded $scriptFileName $args
     }
 
     method define script {
@@ -151,6 +152,18 @@ snit::typemethod TclTaskRunner parse-opts {argsVar} {
     parsePosixOpts argv alias [dict create n dry-run s silent d debug]
 }
 
+snit::typemethod TclTaskRunner parse-pairs {argsVar} {
+    upvar 1 $argsVar argv
+    set result []
+    for {} {[llength $argv]
+            && [regexp {^(\w+)=(.*)$} [lindex $argv 0] -> key value]} {
+        struct::list shift argv
+    } {
+        lappend result -$key $value
+    }
+    set result
+}
+
 snit::typemethod TclTaskRunner oneshot {varName script args} {
     upvar 1 $varName self
     
@@ -183,7 +196,13 @@ snit::typemethod TclTaskRunner toplevel args {
         exit 1
     }
 
-    set def [$self use $taskFile]
+    # key=value style options
+    set def [$self use $taskFile {*}[$type parse-pairs args]]
+
+    if {[set opts [$type parse-opts args]] ne ""} {
+        # To allow -n after key=value options
+        $self configure {*}$opts
+    }
 
     if {[$self cget -dump]} {
         puts [$def dump]

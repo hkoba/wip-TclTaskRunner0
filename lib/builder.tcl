@@ -108,6 +108,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         set extName @$rootName
         set subdef [$self taskset ensure-loaded \
                         [$self filename-from-extern $rootName $def] \
+                        {} \
                         [+ 1 [$def cget -depth]]]
         $def extern add $extName $subdef \
             [if {$asName ne ""} {$myRegistry parse-use-spec $asName}]
@@ -332,11 +333,12 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     #========================================
 
-    method {taskset ensure-loaded} {fn {depth 0}} {
+    method {taskset ensure-loaded} {fn optsList {depth 0}} {
         set name [$myRegistry relative-name $fn]
         if {![$myRegistry exists $name]} {
             set rc [catch {
-                $self taskset define file $fn -depth $depth
+                $self taskset define file $fn -depth $depth \
+                    -runtime-options $optsList
             } error]
             if {$rc} {
                 set diag "Can't load tcltask $fn: $error"

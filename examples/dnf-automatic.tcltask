@@ -4,8 +4,10 @@
 default target MAIN
 
 variable packageName dnf-automatic
-variable timerAction install
-# install, download, notifyonly
+
+option -action -default install -type {
+    snit::enum -values {install download notifyonly}
+}
 
 MAIN depends target package check {
     set rc [catch {exec rpm -q $packageName} error]
@@ -22,5 +24,5 @@ MAIN depends target timer check {
 }
 
 method timer-name {} {
-    return $packageName-$timerAction.timer
+    return $packageName-$options(-action).timer
 }

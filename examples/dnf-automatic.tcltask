@@ -1,0 +1,26 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- coding: utf-8; mode: tcl -*-
+
+default target MAIN
+
+variable packageName dnf-automatic
+variable timerAction install
+# install, download, notifyonly
+
+MAIN depends target package check {
+    set rc [catch {exec rpm -q $packageName} error]
+    list [expr {$rc == 0}] error $error
+} action {
+    RUN dnf install -y $packageName
+}
+
+MAIN depends target timer check {
+    set rc [catch {exec systemctl --quiet is-enabled [$self timer-name]}]
+    list [expr {$rc == 0}]
+} action {
+    RUN systemctl enable --now [$self timer-name]
+}
+
+method timer-name {} {
+    return $packageName-$timerAction.timer
+}

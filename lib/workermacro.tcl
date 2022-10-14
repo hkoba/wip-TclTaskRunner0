@@ -63,6 +63,8 @@ snit::macro ::TclTaskRunner::use_worker {} {
             {} $self worker traced
 
         if {$options(-run-command) ne ""} {
+            interp alias $myInterp =$options(-run-command) \
+                {} $self worker =run
             interp alias $myInterp $options(-run-command) \
                 {} $self worker run
         }
@@ -70,6 +72,11 @@ snit::macro ::TclTaskRunner::use_worker {} {
         if {$options(-debug) >= 2} {
             $self dputsRaw "# == worker sync end =="
         }
+    }
+
+    method {worker =run} args {
+        interp eval $myInterp \
+            [list exec -ignorestderr {*}$args 2>@ stderr]
     }
 
     method {worker run} args {

@@ -9,6 +9,8 @@ option -action -default install -type {
     snit::enum -values {install download notifyonly}
 }
 
+import is-in-container from container-utils.tcl
+
 MAIN depends target package check {
     set rc [catch {exec rpm -q $packageName} error]
     list [expr {$rc == 0}] error $error
@@ -20,7 +22,10 @@ MAIN depends target timer check {
     set rc [catch {exec systemctl --quiet is-enabled [$self timer-name]}]
     list [expr {$rc == 0}]
 } action {
-    RUN systemctl enable --now [$self timer-name]
+    set opts [if {![is-in-container]} {
+        list --now
+    }]
+    RUN systemctl enable {*}$opts [$self timer-name]
 }
 
 method timer-name {} {

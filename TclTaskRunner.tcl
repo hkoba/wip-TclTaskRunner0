@@ -190,17 +190,22 @@ snit::typemethod TclTaskRunner toplevel args {
     }
 
     $type $self {*}$opts {*}[$type parse-opts args]
-        
+
     if {![file exists $taskFile]} {
         puts stderr [$self usage]
         exit 1
     }
 
-    # key=value style options
-    set def [$self use $taskFile {*}[$type parse-pairs args]]
+    # key=value style options for $taskFile (taskset)
+    set taskFileOpts [$type parse-pairs args]
+    set def [$self use $taskFile {*}$taskFileOpts]
 
-    if {[set opts [$type parse-opts args]] ne ""} {
-        # To allow -n after key=value options
+    if {$taskFileOpts ne ""
+        &&
+        [set opts [$type parse-opts args]] ne ""} {
+        # If taskFile options are given,
+        # also parse trailing options
+        # to allow -n after key=value
         $self configure {*}$opts
     }
 

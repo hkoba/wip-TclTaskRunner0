@@ -1,0 +1,41 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+default target MAIN
+
+package require fileutil
+
+variable tempDir ""
+variable gitTopDir [exec git rev-parse --show-toplevel]
+
+MAIN depends target git check {
+    set cmd [auto_execok git]
+    list [expr {$cmd ne ""}] cmd $cmd
+} action {
+    error "git command must exist to run this task"
+}
+
+MAIN depends target clone check {
+    file exists $tempDir/clone
+} action {
+    RUN git clone $gitTopDir $tempDir/clone
+}
+
+clone depends target tempDir check {
+    expr {$tempDir ne "" && [file isdirectory $tempDir]}
+} action {
+    set tempDir [fileutil::maketempdir]
+    $self foo
+    puts "In tempDir action: self=$self, selfns=$selfns, tempDir=$tempDir, current=[namespace current], path=[namespace path]"
+}
+
+destructor {
+    puts "destructor! self=$self, selfns=$selfns, tempDir=$tempDir, current=[namespace current], path=[namespace path]"
+    if {$tempDir ne ""} {
+        file delete --force $tempDir
+    }
+}
+
+method foo {} {
+    puts "In method foo: self=$self, selfns=$selfns, tempDir=$tempDir, current=[namespace current], path=[namespace path]"
+}

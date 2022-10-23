@@ -199,6 +199,7 @@ snit::typemethod TclTaskRunner toplevel args {
     # key=value style options for $taskFile (taskset)
     set taskFileOpts [$type parse-pairs args]
     set def [$self use $taskFile {*}$taskFileOpts]
+    scope_guard def [list $def runtime invoke destroy]
 
     if {$taskFileOpts ne ""
         &&

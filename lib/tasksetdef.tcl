@@ -71,6 +71,17 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         list apply [list {self args} {$self {*}$args} $targetNS] \
             [$self runtime instance] {*}$args
     }
+    method {runtime destroy} {} {
+        puts "called!"
+        set targetNS [$self runtime typename]
+        if {[catch {
+            apply [list {self args} {$self destroy} $targetNS] \
+                [$self runtime instance]
+        } error]} {
+            puts "got error in runtime destroy: $error"
+        }
+        puts "here!"
+    }
 
     method dump {} {
         list deps $myDeps methods $myMethods procs $myProcs extern $myExtern
@@ -184,6 +195,25 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         struct::list mapfor i $myImportList {lindex $i end}
     }
 
+    variable mySpecial [dict create constructor [] destructor []]
+    method {special set} {kind list} {
+        if {![dict exists $mySpecial $kind]} {
+            error "Unknown keyword $kind"
+        }
+        if {[dict get $mySpecial $kind] ne ""} {
+            error "Duplicate $kind! previously [dict get $mySpecial $kind], now $body"
+        }
+        dict set mySpecial $kind $list
+    }
+    method {special get} {} {
+        set result []
+        foreach name [dict keys $mySpecial] {
+            if {[set value [dict get $mySpecial $name]] eq ""} continue
+            lappend result [list $name {*}$value]
+        }
+        set result
+    }
+
     variable myMisc [dict create method [] proc []]
     method {misc add} {kind name body} {
         dict set myMisc $kind $name $body
@@ -216,9 +246,14 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
         return ${ns}::instance
     }
 
+    typemethod destroy-instance ns {
+        ${ns}::instance destroy
+    }
+
     method genscript args {
         set script [__EXPAND [string trimleft $ourTypeTemplate] \
                         %TYPENAME% [$self runtime typename] \
+                        %SPECIALS% [join [$self special get] \n] \
                         %METHODS% [join [$self misc get method] \n] \
                         %PROCS% [join [$self misc get proc] \n] \
                         %DEPS% [$self deps] \
@@ -257,6 +292,7 @@ snit::type ::TclTaskRunner::TaskSetDefinition {
 
             %OPTIONS%
             %VARIABLES%
+            %SPECIALS%
             %METHODS%
             %PROCS%
 

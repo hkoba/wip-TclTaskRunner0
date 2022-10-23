@@ -93,6 +93,8 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         $self define-declaration $varName option      => misc add option
         $self define-declaration $varName method      => misc add method
 
+        $self define-declaration $varName destructor  => special-set destructor
+
         $self define-declaration $varName use         => declare use
         $self define-declaration $varName import      => declare import
         $self define-declaration $varName package     => declare package
@@ -314,6 +316,11 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         upvar 1 $varName def
         # XXX: conflict
         $def misc add $kind $targetName [list $kind $targetName {*}$args]
+    }
+
+    method special-set {kind varName args} {
+        upvar 1 $varName def
+        $def special set $kind $args
     }
 
     method {annotate public} {varName kind targetName args} {

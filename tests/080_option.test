@@ -1,0 +1,58 @@
+#!/usr/bin/env tclsh
+
+package require tcltest
+namespace import tcltest::*
+
+package require fileutil
+package require struct::list
+
+set testScript [file normalize [info script]]
+set testDir    [file rootname $testScript]
+set runnerFn   [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
+set execCmd    [list exec [info nameofexecutable] $runnerFn]
+
+#========================================
+set THEME "runtime option of taskset"
+
+set ::env(PATH) [file dirname $runnerFn]:$::env(PATH)
+
+
+test $THEME-prepare-clean "exec TclTaskRunner.tcl main.tcltask" -body {
+    {*}$execCmd --silent $testDir/main.tcltask clean
+} -returnCodes 0
+
+test $THEME-info-options "info options" -body {
+    {*}$execCmd $testDir/main.tcltask info options
+} -result {-name -content}
+
+test $THEME-options "option name=bar content=xxx" -body {
+
+    set out [{*}$execCmd --silent $testDir/main.tcltask name=bar content=xxx]
+
+    list $out [file exists $testDir/bar.out]
+
+} -result {xxx 1}
+
+
+test $THEME-default "default" -body {
+
+    set out [{*}$execCmd --silent $testDir/main.tcltask]
+
+    list $out [file exists $testDir/foo.out]
+
+} -result {{Default Content} 1}
+
+test $THEME-option-check "reject wrong option value via snit::enum" -body {
+    {*}$execCmd --silent $testDir/main.tcltask name=xxxxx
+} \
+    -returnCodes 1 \
+    -match regexp \
+    -result {invalid -name value: invalid value "xxxxx", should be one of: foo, bar, baz}
+
+test $THEME-clean "No *.out after clean" -body {
+    {*}$execCmd --silent $testDir/main.tcltask clean
+    glob -nocomplain *.out
+} -result {}
+
+cleanupTests
+

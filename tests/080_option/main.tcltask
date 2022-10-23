@@ -1,0 +1,26 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+package require fileutil
+
+default target MAIN action {
+    puts [fileutil::cat $options(-name).out]
+}
+
+option -name -default foo -type {
+    snit::enum -values {foo bar baz}
+}
+
+option -content "Default Content"
+
+MAIN depends target testfile check {
+    file exists $options(-name).out
+} action {
+    ** fileutil::writeFile $options(-name).out $options(-content)
+}
+
+method clean {} {
+    if {[set files [glob -nocomplain *.out]] ne ""} {
+        ** file delete {*}$files
+    }
+}

@@ -337,8 +337,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         set name [$myRegistry relative-name $fn]
         if {![$myRegistry exists $name]} {
             set rc [catch {
-                $self taskset define file $fn -depth $depth \
-                    -runtime-options $optsList
+                $self taskset define file $fn $optsList -depth $depth
             } error]
             if {$rc} {
                 set diag "Can't load tcltask $fn: $error"
@@ -351,15 +350,15 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         $myRegistry get $name
     }
 
-    method {taskset define file} {origFn args} {
-        set opts [lassign [$self taskset prepare file $origFn {*}$args] def]
+    method {taskset define file} {origFn optList args} {
+        set opts [lassign [$self taskset prepare file $origFn $optList {*}$args] def]
 
         $self taskset compile $def {*}$opts
         
         set def
     }
 
-    method {taskset prepare file} {origFn args} {
+    method {taskset prepare file} {origFn optList args} {
         set depth [from args -depth 0]
 
         set fn [fileutil::lexnormalize [file normalize $origFn]]
@@ -368,11 +367,20 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
         if {[$myRegistry exists $name]} {
             error "Conflicting name?? $name"
         }
-        
+
+        if {[file exists [set configFn [file rootname $fn].tcldict]]} {
+            set fileConfig [dict create]
+            foreach {key value} [fileutil::cat $configFn] {
+                dict set fileConfig -$key $value
+            }
+            set optList [dict merge $fileConfig $optList]
+        }
+
         $myRegistry add $name \
             [set def [$myTaskSetType $myRegistry.$name \
                           -name $name -file $fn \
                           -depth $depth \
+                          -runtime-options $optList \
                           {*}$args]]
 
         $self dputs $depth define $name -file $fn

@@ -1,0 +1,48 @@
+#!/usr/bin/env tclsh
+
+package require tcltest
+namespace import tcltest::*
+
+package require fileutil
+package require struct::list
+
+set testScript [file normalize [info script]]
+set testDir    [file rootname $testScript]
+set runnerFn   [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
+set execCmd    [list exec [info nameofexecutable] $runnerFn]
+
+#========================================
+set THEME "runtime option of taskset"
+
+set ::env(PATH) [file dirname $runnerFn]:$::env(PATH)
+
+
+test $THEME-prepare-clean "cleanup before run" -body {
+    {*}$execCmd --silent $testDir/foo.tcltask clean
+} -returnCodes 0
+
+test $THEME-default "default value is overridden by foo.tcldict" -body {
+
+    set out [{*}$execCmd --silent $testDir/foo.tcltask]
+
+    list $out [file exists $testDir/baz.out]
+
+} -result {{Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.} 1}
+
+test $THEME-options "Runtime option wins" -body {
+
+    {*}$execCmd --silent $testDir/foo.tcltask clean
+
+    set out [{*}$execCmd --silent $testDir/foo.tcltask content=xxx]
+
+    list $out [file exists $testDir/baz.out]
+
+} -result {xxx 1}
+
+test $THEME-clean "No *.out after clean" -body {
+    {*}$execCmd --silent $testDir/foo.tcltask clean
+    glob -nocomplain *.out
+} -result {}
+
+cleanupTests
+

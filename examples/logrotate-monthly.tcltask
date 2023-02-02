@@ -1,0 +1,59 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl -*-
+
+import {scope_guard} from ./utils.tcl
+
+option -file /etc/logrotate.conf
+option -rotate 60
+option -backup {}
+
+default target MAIN check {
+    set config [$self configs]
+    set isMonthly [expr {[dict get $config duration] eq "monthly"}]
+    set countMatch [expr {[dict get $config rotate] eq $options(-rotate)}]
+    list [expr {$isMonthly && $countMatch}] config $config
+} action {
+    $self rewrite $options(-file) -i$options(-backup)
+}
+
+method rewrite {{fn ""} args} {
+    if {$fn eq ""} {
+        set fn $options(-file)
+    }
+    RUN perl {*}$args -s -ple {
+        s/^(hourly|daily|weekly|yearly)/monthly/;
+        s/^rotate \d+/rotate $rotate/;
+    } -- -rotate=$options(-rotate) $fn
+}
+
+method configs {{fn ""}} {
+    if {$fn eq ""} {
+        set fn $options(-file)
+    }
+    set fh [open $fn]
+    scope_guard fh [list close $fh]
+    set dict []
+    set ignore 0
+    while {[gets $fh line] >= 0} {
+        if {![regexp {^\w+} $line]} continue
+        set rest [lassign $line key]
+        switch $key {
+            hourly - daily - weekly - monthly - yearly {
+                dict set dict duration [list $key {*}$rest]
+                continue
+            }
+            include {
+                continue
+            }
+            postrotate {
+                set ignore 1
+            }
+            endscript {
+                set ignore 0
+            }
+        }
+        if {$ignore} continue
+        dict set dict $key $rest
+    }
+    set dict
+}

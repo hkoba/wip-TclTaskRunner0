@@ -4,7 +4,13 @@
 package require snit
 package require fileutil
 package require struct::list
-package require dicttool
+if {[catch {package require dicttool}]} {
+   namespace eval ::TclTaskRunner {}
+   proc ::TclTaskRunner::dummy_dict_print dict {set dict}
+   namespace ensemble configure dict -map [dict replace\
+      [namespace ensemble configure dict -map] print ::TclTaskRunner::dummy_dict_print]
+}
+# 
 
 # This type implements $def in TclTaskRunner.tcl
 # and also is called as $scope in RunContext.

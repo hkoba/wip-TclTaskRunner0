@@ -27,7 +27,9 @@ set os_release [::utils::read_shell_env_file /etc/os-release]
 
 variable EL_MAJOR_VERSION [switch [dict get $os_release ID] {
     fedora {
-        if {[dict get $os_release VERSION_ID] >= 28} {
+        if {[dict get $os_release VERSION_ID] >= 34} {
+            list el9
+        } elseif {[dict get $os_release VERSION_ID] >= 28} {
             list el8
         } else {
             error "Fedora version too old!"

@@ -14,7 +14,7 @@ default target etc-git dependsTasks /etc/.gitignore check {
     ** exec git init -b main --shared=0600 /etc
 }
 
-target /etc/.gitignore dependsFiles {} action {
+target-file /etc/.gitignore dependsFiles {} action {
     puts "target=$target, pwd=[pwd]"
     ** write_file $target [unindent {
         /mtab

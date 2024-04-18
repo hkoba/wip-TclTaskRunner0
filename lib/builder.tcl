@@ -209,7 +209,7 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
     method {target add-kind} {kind varName targetName args} {
         upvar 1 $varName def
         lassign [$self precheck target task $def $targetName {*}$args] \
-            kind dict
+            _ dict
         dict-set-default dict public no
         $def $kind add $targetName $dict
 

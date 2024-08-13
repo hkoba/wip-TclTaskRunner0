@@ -1,0 +1,57 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- coding: utf-8; mode: tcl -*-
+
+package require fileutil
+
+option -file /etc/ssh/sshd_config.d/90-site-security.conf
+
+#========================================
+
+set REQUIREMENTS {
+    {PasswordAuthentication no}
+
+    {KbdInteractiveAuthentication no}
+
+    {PermitEmptyPasswords no}
+}
+
+#========================================
+
+default target ALL
+
+foreach t $REQUIREMENTS {
+    ALL depends target $t check {
+        $self test-config {*}$target
+    } action {
+        $self update {*}$target
+    }
+}
+
+#========================================
+
+method test-config {keyword expect} {
+    set config [$self actual-config]
+    set got [dict get $config [string tolower $keyword]]
+    if {[string is boolean $expect]} {
+        list [expr {$expect == $got}] got $got expect $expect
+    } elseif {[string is integer] || [string is double]} {
+        list [expr {$expect == $got}] got $got expect $expect
+    } else {
+        list [expr {$expect eq $got}] got $got expect $expect
+    }
+}
+
+method actual-config {} {
+    set dict [dict create]
+    foreach line [split [exec sshd -T] \n] {
+        if {![regexp {^(\S+)\s+(\S.*)$} $line -> key rest]} {
+            error "Can't parse sshd config: $line"
+        }
+        dict set dict $key $rest
+    }
+    set dict
+}
+
+method update {keyword expect} {
+    ** fileutil::appendToFile $options(-file) "$keyword $expect\n"
+}

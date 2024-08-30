@@ -8,6 +8,7 @@ snit::macro ::TclTaskRunner::use_worker {} {
 
     option -dry-run-marker **
     option -run-command RUN
+    option -dry-run-test IS_DRY_RUN
 
     variable myWorker ""
     variable myInterp ""
@@ -67,6 +68,10 @@ snit::macro ::TclTaskRunner::use_worker {} {
                 {} $self worker =run
             interp alias $myInterp $options(-run-command) \
                 {} $self worker run
+        }
+        if {$options(-dry-run-test) ne ""} {
+            interp alias $myInterp $options(-dry-run-test) \
+                {} $self cget -dry-run
         }
 
         if {$options(-debug) >= 2} {

@@ -1,0 +1,20 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- coding: utf-8; mode: tcl -*-
+
+import {
+    scope_guard
+} from utils.tcl
+
+method find-nsswitch-items {fn args} {
+    set fh [open $fn]
+    scope_guard fh [list close $fh]
+
+    set result []
+    while {[gets $fh line] >= 0} {
+        if {![regexp {^(\w+):\s*(\S.*)} $line -> key value]} continue
+        if {$key in $args} {
+            dict set result $key $value
+        }
+    }
+    set result
+}

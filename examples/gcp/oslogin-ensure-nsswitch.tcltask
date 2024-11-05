@@ -9,6 +9,13 @@ variable nsswitchFn /etc/nsswitch.conf
 variable osloginDBNames {passwd group}
 variable osloginSources {cache_oslogin oslogin}
 
+default target MAIN check {
+    set missing [$self list-missing-oslogin-sources]
+    list [expr {$missing eq ""}] missing $missing
+} action {
+    XXX: TBW
+}
+
 method list-missing-oslogin-sources {{fn ""}} {
     if {$fn eq ""} {
         set fn $nsswitchFn

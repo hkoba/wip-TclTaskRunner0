@@ -5,6 +5,28 @@ import {
     scope_guard
 } from utils.tcl
 
+variable nsswitchFn /etc/nsswitch.conf
+variable osloginDBNames {passwd group}
+variable osloginSources {cache_oslogin oslogin}
+
+method list-missing-oslogin-sources {{fn ""}} {
+    if {$fn eq ""} {
+        set fn $nsswitchFn
+    }
+    set dict [$self find-nsswitch-items $fn {*}$osloginDBNames]
+
+    set missing []
+    foreach db $osloginDBNames {
+        set enabledSources [dict get $dict $db]
+        foreach src $osloginSources {
+            if {$src in $enabledSources} continue
+            dict lappend missing $db $src
+        }
+    }
+
+    set missing
+}
+
 method find-nsswitch-items {fn args} {
     set fh [open $fn]
     scope_guard fh [list close $fh]

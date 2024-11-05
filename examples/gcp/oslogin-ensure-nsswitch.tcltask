@@ -13,7 +13,31 @@ default target MAIN check {
     set missing [$self list-missing-oslogin-sources]
     list [expr {$missing eq ""}] missing $missing
 } action {
-    XXX: TBW
+    # XXX: 理想的には missing のみを補うべきだが、そこまで手間を掛ける余裕はないので手抜き
+    $self update-nsswitch-for-oslogin
+}
+
+#
+# passwd,group の行に cache_oslogin oslogin を追記する
+#
+method update-nsswitch-for-oslogin  {{fn ""}} {
+    if {$fn eq ""} {
+        set fn $nsswitchFn
+    }
+
+    set inplace [if {![IS_DRY_RUN]} {
+        list -i
+    }]
+
+    set map [list @SRCS@ $osloginSources \
+                 @PATTERN@ [join $osloginDBNames |]]
+
+    set script [list perl {*}$inplace -ple [string map $map {
+        if (/^(@PATTERN@):/) { $_ .= " @SRCS@"}
+    }] $fn]
+
+    puts "# $script"
+    exec {*}$script >@ stdout 2>@ stderr
 }
 
 method list-missing-oslogin-sources {{fn ""}} {

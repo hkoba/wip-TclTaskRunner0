@@ -137,14 +137,15 @@ snit::type TclTaskRunner {
     }
 }
 
-source $TclTaskRunner::libDir/builder.tcl
-source $TclTaskRunner::libDir/context.tcl
-source $TclTaskRunner::libDir/registry.tcl
-source $TclTaskRunner::libDir/termcolor.tcl
-source $TclTaskRunner::libDir/namespace-util.tcl
+source $::TclTaskRunner::libDir/builder.tcl
+source $::TclTaskRunner::libDir/context.tcl
+source $::TclTaskRunner::libDir/registry.tcl
+source $::TclTaskRunner::libDir/termcolor.tcl
+source $::TclTaskRunner::libDir/namespace-util.tcl
 
 snit::method TclTaskRunner usage args {
-    return "Usage: [file tail $TclTaskRunner::scriptFn] ?main.tcltask?"
+    set fn [file tail $::TclTaskRunner::scriptFn]
+    return "Usage: $fn ?--option=value? ?some.tcltask? ?method? ?args?"
 }
 
 snit::typemethod TclTaskRunner parse-opts {argsVar} {

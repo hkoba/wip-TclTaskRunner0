@@ -1,0 +1,28 @@
+#!/usr/bin/env tclsh
+
+package require tcltest
+namespace import tcltest::*
+
+package require fileutil
+package require struct::list
+
+set testScript [file normalize [info script]]
+set testDir    [file rootname $testScript]
+set runnerFn   [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
+
+#========================================
+set THEME variable
+
+set ::env(PATH) [file dirname $runnerFn]:$::env(PATH)
+
+test $THEME-usage-1 "usage" -body {
+
+    cd $testDir
+
+    catch {
+        exec [info nameofexecutable] $runnerFn
+    } error
+
+    set error
+
+} -match regexp -result ^Usage:

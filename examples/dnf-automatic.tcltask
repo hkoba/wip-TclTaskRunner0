@@ -3,11 +3,8 @@
 
 default target MAIN
 
-variable packageName dnf-automatic
-
-option -action -default install -type {
-    snit::enum -values {install download notifyonly}
-}
+variable serviceName dnf-automatic
+variable packageName dnf5-plugin-automatic
 
 import is-in-container from container-utils.tcl
 
@@ -29,5 +26,5 @@ MAIN depends target timer check {
 }
 
 method timer-name {} {
-    return $packageName-$options(-action).timer
+    return $serviceName.timer
 }

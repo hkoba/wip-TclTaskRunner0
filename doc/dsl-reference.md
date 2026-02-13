@@ -8,17 +8,20 @@ TclTaskRunner のタスク定義ファイル (`*.tcltask`) で使用可能なコ
 新しいタスクを定義します。
 
 ```tcl
-target name 
-    check { ... } 
-    action { ... } 
-    dependsTasks { ... } 
-    dependsFiles { ... }
+target name \
+    check { ... } \
+    action { ... } \
+    dependsTasks { ... } \
+    dependsFiles { ... } \
+    values { var1 val1 var2 val2 ... }
 ```
 
 - **check**: タスクが完了しているかを確認するスクリプト。真を返せばスキップされます。
+    - デバッグを容易にするため、真理値以外に `[list $bool key1 val1 ...]` 形式で詳細情報を返すこともできます。
 - **action**: タスクを実行するスクリプト。
 - **dependsTasks**: 依存する他のターゲット名のリスト。
 - **dependsFiles**: 依存するファイルパスのリスト。
+- **values** (エイリアス: **let**): `check` や `action` 内で使用可能なローカル変数を定義します。
 
 ### `target-file` (または `FILE`)
 ファイル生成タスクを定義します。`target` と同様ですが、ターゲット名がファイルパスとして扱われます。
@@ -63,6 +66,16 @@ import {mycmd1 mycmd2} from utils.tcl
 
 - 通常実行時: そのまま実行。
 - ドライラン時 (`-n`): 実行せずにコマンドを表示。
+
+### `RUN` / `=RUN`
+外部コマンドを実行するための便利なショートカットです。
+
+- **RUN**: `exec ... >@ stdout 2>@ stderr` と同等。コマンドを標準出力・標準エラーに出力しながら実行します。
+- **=RUN**: `exec ... 2>@ stderr` と同等。標準エラーのみを出力します。
+- `**` と同様、ドライラン時は実行がスキップされます。
+
+### `IS_DRY_RUN`
+現在の実行モードがドライラン (`-n`) かどうかを判定します。真理値を返します。
 
 ## Tcl 標準コマンドの拡張
 `.tcltask` は `snit::type` に変換されるため、以下のコマンドでタスクセット固有の変数や関数を定義できます。

@@ -63,10 +63,8 @@ dep run @my mymethod arg1 arg2
 ### 3. レジストリの活用
 ロードされたすべてのタスクセットは、ファイル名のベース名に `@` を付けた名前（例: `@my`）でレジストリに登録されます。
 
-```tcl
-set obj [dep registry get @my]
-puts "Default target is: [$obj cget -default]"
-```
+- **依存関係での利用**: `dependsTasks @my` のように記述することで、他のタスクセットのデフォルトターゲットに依存させることができます。
+- **オブジェクトの取得**: `set obj [dep registry get @my]` のようにして、タスクセットオブジェクトを直接操作できます。
 
 ## .tcltask の構造と露出
 `.tcltask` 内で定義した要素は、以下のように外部へ露出します。

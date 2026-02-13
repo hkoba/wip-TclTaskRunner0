@@ -1,86 +1,86 @@
-# DSL リファレンス
+# DSL Reference
 
-TclTaskRunner のタスク定義ファイル (`*.tcltask`) で使用可能なコマンドと変数の解説です。
+This document describes the commands and variables available in TclTaskRunner task definition files (`*.tcltask`).
 
-## 基本コマンド
+## Core Commands
 
 ### `target`
-新しいタスクを定義します。
+Defines a new task.
 
 ```tcl
-target name \
-    check { ... } \
-    action { ... } \
-    dependsTasks { ... } \
-    dependsFiles { ... } \
+target name 
+    check { ... } 
+    action { ... } 
+    dependsTasks { ... } 
+    dependsFiles { ... } 
     values { var1 val1 var2 val2 ... }
 ```
 
-- **check**: タスクが完了しているかを確認するスクリプト。真を返せばスキップされます。
-    - デバッグを容易にするため、真理値以外に `[list $bool key1 val1 ...]` 形式で詳細情報を返すこともできます。
-- **action**: タスクを実行するスクリプト。
-- **dependsTasks**: 依存する他のターゲット名のリスト。
-- **dependsFiles**: 依存するファイルパスのリスト。
-- **values** (エイリアス: **let**): `check` や `action` 内で使用可能なローカル変数を定義します。
+- **check**: A script to verify if the task is already completed. If it returns true, the action is skipped.
+    - To aid debugging, it can return a list in the format `[list $bool key1 val1 ...]` instead of just a boolean.
+- **action**: The script to execute when the task is not fulfilled.
+- **dependsTasks**: A list of other target names this task depends on.
+- **dependsFiles**: A list of file paths this task depends on.
+- **values** (alias: **let**): Defines local variables accessible within the `check` and `action` scripts.
 
-### `target-file` (または `FILE`)
-ファイル生成タスクを定義します。`target` と同様ですが、ターゲット名がファイルパスとして扱われます。
+### `target-file` (or `FILE`)
+Defines a file-generating task. Similar to `target`, but the target name is treated as a file path.
 
 ### `default`
-ファイルのデフォルトターゲットを指定します。`default target all ...` のように接頭辞として使います。
+Specifies the default target for the file. Used as a prefix, e.g., `default target all ...`.
 
 ### `public`
-ターゲットを外部から参照可能にします。
+Makes a target accessible from external task sets.
 
 ### `use`
-他の `.tcltask` ファイルをロードします。
+Loads another `.tcltask` file.
 
 ```tcl
 use other.tcltask as other
 ```
 
 ### `import`
-外部の Tcl スクリプトからコマンドをインポートします。
+Imports commands from an external Tcl script.
 
 ```tcl
 import {mycmd1 mycmd2} from utils.tcl
 ```
 
-## 自動変数
+## Automatic Variables
 
-`check` や `action` 内で Makefile 同様の自動変数が使用可能です。
+Within `check` and `action` scripts, you can use automatic variables similar to Makefile:
 
-- `$@`: 現在のターゲット名。
-- `$<`: 最初の依存先。
-- `$^`: すべての依存先のリスト。
-- `$self`: 現在のタスクセットオブジェクト。
+- `$@`: The current target name.
+- `$<`: The first dependency.
+- `$^`: The list of all dependencies.
+- `$self`: The current task set object.
 
-## ユーティリティ
+## Utilities
 
-### `**` (ドライラン・マーカー)
-`action` スクリプト内で破壊的な操作を行うコマンドの前に置きます。
+### `**` (Dry-run Marker)
+Place this before commands that perform destructive operations in an `action` script.
 
 ```tcl
 ** exec rm -rf /tmp/cache
 ```
 
-- 通常実行時: そのまま実行。
-- ドライラン時 (`-n`): 実行せずにコマンドを表示。
+- Normal mode: Executes the command.
+- Dry-run mode (`-n`): Only prints the command to the screen.
 
 ### `RUN` / `=RUN`
-外部コマンドを実行するための便利なショートカットです。
+Convenient shortcuts for executing external commands.
 
-- **RUN**: `exec ... >@ stdout 2>@ stderr` と同等。コマンドを標準出力・標準エラーに出力しながら実行します。
-- **=RUN**: `exec ... 2>@ stderr` と同等。標準エラーのみを出力します。
-- `**` と同様、ドライラン時は実行がスキップされます。
+- **RUN**: Equivalent to `exec ... >@ stdout 2>@ stderr`. Prints both stdout and stderr while executing.
+- **=RUN**: Equivalent to `exec ... 2>@ stderr`. Prints only stderr.
+- Like `**`, these are skipped in dry-run mode.
 
 ### `IS_DRY_RUN`
-現在の実行モードがドライラン (`-n`) かどうかを判定します。真理値を返します。
+Returns a boolean indicating whether the current execution is in dry-run mode (`-n`).
 
-## Tcl 標準コマンドの拡張
-`.tcltask` は `snit::type` に変換されるため、以下のコマンドでタスクセット固有の変数や関数を定義できます。
+## Extensions to Standard Tcl
+Since `.tcltask` files are converted into `snit::type`, you can use the following commands to define task set-specific elements:
 
-- `variable`: タスクセット内の共有変数。
-- `proc`: タスクセット内のプライベート関数。
-- `option`: 外部から設定可能なオプション。
-- `method`: 外部から呼び出し可能なメソッド。
+- `variable`: Shared variables within the task set.
+- `proc`: Private procedures within the task set.
+- `option`: Externally configurable options.
+- `method`: Publicly callable methods.

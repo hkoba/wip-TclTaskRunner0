@@ -1,48 +1,48 @@
-# TclTaskRunner アーキテクチャ
+# TclTaskRunner Architecture
 
-TclTaskRunner (ttr) は、Tcl の強力なメタプログラミング能力を活用した、拡張性の高いタスクランナーです。
+TclTaskRunner (ttr) is a highly extensible task runner that leverages the powerful metaprogramming capabilities of Tcl.
 
-## 全体構成
+## System Overview
 
-システムは以下の 5 つの主要コンポーネントで構成されています。
+The system consists of five primary components:
 
-1.  **コントローラ (TclTaskRunner.tcl)**
-    - CLI 引数の解析、環境の初期化。
-    - 他のコンポーネントを組み合わせて実行フローを制御。
+1.  **Controller (TclTaskRunner.tcl)**
+    - Parses CLI arguments and initializes the environment.
+    - Orchestrates the execution flow by combining other components.
 
-2.  **レジストリ (TaskSetRegistry)**
-    - ロードされたタスク定義ファイル (`*.tcltask`) を管理。
-    - ファイルパスと論理的なタスクセット名のマッピング。
+2.  **Registry (TaskSetRegistry)**
+    - Manages loaded task definition files (`*.tcltask`).
+    - Maps file paths to logical task set names.
 
-3.  **ビルダー (TaskSetBuilder)**
-    - `.tcltask` ファイルの解析。
-    - 隔離されたインタープリタでの DSL 評価。
-    - タスク定義から実行可能な `snit::type` (クラス) を動的に生成（コンパイル）。
+3.  **Builder (TaskSetBuilder)**
+    - Parses `.tcltask` files.
+    - Evaluates DSL in an isolated interpreter.
+    - Dynamically generates (compiles) executable `snit::type` (classes) from task definitions.
 
-4.  **定義オブジェクト (TaskSetDefinition)**
-    - 個々のタスクセットの状態とメタデータを保持。
-    - 動的に生成された「実行用インスタンス」を内包し、DSL 内の `proc` や `variable` を実行環境として提供。
+4.  **Definition Object (TaskSetDefinition)**
+    - Holds the state and metadata of individual task sets.
+    - Contains a dynamically generated "runtime instance" that provides the execution environment for `proc` and `variable` defined in the DSL.
 
-5.  **実行コンテキスト (RunContext)**
-    - 依存関係グラフの構築と巡回チェック。
-    - タイムスタンプ（実ファイル時刻、または `check` スクリプトの結果）に基づく更新判定。
-    - タスクの実行 (Action) と実行後の状態確認 (Post-check)。
+5.  **Execution Context (RunContext)**
+    - Builds the dependency graph and performs circular dependency checks.
+    - Determines if a target needs updating based on timestamps (actual file mtime or the result of a `check` script).
+    - Executes tasks (Action) and verifies the result (Post-check).
 
-## 処理の流れ
+## Execution Flow
 
-1.  **ロード**: `TaskSetBuilder` が `.tcltask` を読み込み、DSL を解析してターゲット情報を収集。
-2.  **コンパイル**: 収集した情報を元に `snit::type` を生成し、Tcl インタープリタ上に定義。
-3.  **解析**: `RunContext` が指定されたターゲットから依存関係を再帰的に走査。
-4.  **判定**: ターゲットが「古い」か「未成立」かを、`check` スクリプトの戻り値やファイルの `mtime` で判定。
-5.  **実行**: 必要に応じて `action` を実行し、最後に `check` で成功を確認。
+1.  **Load**: `TaskSetBuilder` reads a `.tcltask` file, evaluates the DSL, and collects target information.
+2.  **Compile**: Generates a `snit::type` based on the collected information and defines it in the Tcl interpreter.
+3.  **Analyze**: `RunContext` recursively traverses dependencies starting from the specified target.
+4.  **Evaluate**: Determines if a target is "outdated" or "unfulfilled" by comparing the `check` script's return value or file `mtime`.
+5.  **Execute**: Runs the `action` if necessary and confirms success with a final `check`.
 
-## 状態管理の抽象化
+## Abstraction of State Management
 
-ttr の最大の特徴は、**「状態の成立」を「時刻 (mtime)」として抽象化**している点にあります。
+The most significant feature of ttr is its **abstraction of "fulfilled state" as "time (mtime)"**.
 
-- **ファイル**: `file mtime` の値。
-- **タスク**:
-    - `check` が真を返す場合 → 現在時刻 (常に最新)
-    - `check` が偽を返す場合 → `-Inf` (無限の過去、常に更新が必要)
+- **Files**: The value returned by `file mtime`.
+- **Tasks**:
+    - If `check` returns true → Current time (always up-to-date).
+    - If `check` returns false → `-Inf` (infinite past, always needs update).
 
-この抽象化により、ファイルとタスクが混在した依存関係を、単一の比較ロジックで一貫して処理しています。
+This abstraction allows ttr to process dependencies involving both files and abstract tasks using a single, consistent comparison logic.

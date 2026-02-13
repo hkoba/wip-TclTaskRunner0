@@ -1,26 +1,26 @@
-# 利用ガイド
+# Usage Guide
 
-TclTaskRunner (ttr) は、コマンドラインツールとしても、他の Tcl スクリプトからのライブラリとしても利用可能です。
+TclTaskRunner (ttr) can be used as both a command-line tool and a library for other Tcl scripts.
 
-## コマンドラインでの利用
+## Command-Line Usage
 
-`TclTaskRunner.tcl` を実行する場合、基本形式は以下の通りです。
+When running `TclTaskRunner.tcl`, the basic format is as follows:
 
 ```bash
 TclTaskRunner.tcl [options] [taskfile.tcltask] [key=value ...] [target_or_method] [args...]
 ```
 
-### 引数の解釈
-1.  **システムオプション**: `--dry-run`, `--debug`, `--silent` など、ttr 自体の動作を制御します。
-2.  **タスクファイル**: 読み込む `.tcltask` ファイル。省略時は `main.tcltask` が探されます。
-3.  **タスクオプション (`key=value`)**: `.tcltask` 内で `option -key` として定義されている変数に値を渡します。
-4.  **ターゲットまたはメソッド**: 
-    - 実行したい `target` 名。
-    - または、`.tcltask` 内で `method` として定義されている名前。
-    - 省略時は `default target` が実行されます。
+### Argument Interpretation
+1.  **System Options**: `--dry-run`, `--debug`, `--silent`, etc. These control ttr's own behavior.
+2.  **Task File**: The `.tcltask` file to load. If omitted, it looks for `main.tcltask`.
+3.  **Task Options (`key=value`)**: Passes values to variables defined as `option -key` within the `.tcltask` file.
+4.  **Target or Method**: 
+    - The name of the `target` you want to execute.
+    - Or the name of a `method` defined within the `.tcltask`.
+    - If omitted, the `default target` is executed.
 
-### 実例
-`tests/080_option/main.tcltask` を例にします。
+### Example
+Using `tests/080_option/main.tcltask` as an example:
 
 ```tcl
 option -name -default foo
@@ -28,49 +28,49 @@ method clean {} { ... }
 target all { ... }
 ```
 
-このファイルを呼び出す場合：
-- `ttr main.tcltask`: `all` ターゲットを `-name foo` で実行。
-- `ttr main.tcltask name=bar`: `all` ターゲットを `-name bar` で実行。
-- `ttr main.tcltask clean`: `clean` メソッドを実行。
+Calling this file:
+- `ttr main.tcltask`: Executes the `all` target with `-name foo`.
+- `ttr main.tcltask name=bar`: Executes the `all` target with `-name bar`.
+- `ttr main.tcltask clean`: Executes the `clean` method.
 
-## ライブラリとしての利用
+## Usage as a Library
 
-自作の Tcl スクリプト内から ttr を制御する手順は以下の通りです。
+To control ttr from your own Tcl script:
 
-### 1. 初期化とロード
+### 1. Initialization and Loading
 ```tcl
 source TclTaskRunner.tcl
 
-# インスタンスの作成
+# Create an instance
 TclTaskRunner dep -debug 0 -silent 1
 
-# タスクファイルのロード
+# Load a task file
 set taskset [dep use path/to/my.tcltask name=value]
 ```
 
-### 2. タスクの実行
+### 2. Executing Tasks
 ```tcl
-# デフォルトターゲットの実行
+# Execute the default target
 dep run @my
 
-# 特定のターゲットを実行
+# Execute a specific target
 dep run @my mytarget
 
-# メソッドの実行
+# Execute a method
 dep run @my mymethod arg1 arg2
 ```
 
-### 3. レジストリの活用
-ロードされたすべてのタスクセットは、ファイル名のベース名に `@` を付けた名前（例: `@my`）でレジストリに登録されます。
+### 3. Using the Registry
+All loaded task sets are registered in the registry with a name prefixed by `@` based on the file's base name (e.g., `@my`).
 
-- **依存関係での利用**: `dependsTasks @my` のように記述することで、他のタスクセットのデフォルトターゲットに依存させることができます。
-- **オブジェクトの取得**: `set obj [dep registry get @my]` のようにして、タスクセットオブジェクトを直接操作できます。
+- **In Dependencies**: You can specify `dependsTasks @my` to depend on the default target of another task set.
+- **Retrieving Objects**: You can retrieve and manipulate task set objects directly: `set obj [dep registry get @my]`.
 
-## .tcltask の構造と露出
-`.tcltask` 内で定義した要素は、以下のように外部へ露出します。
+## .tcltask Structure and Exposure
+Elements defined within a `.tcltask` are exposed externally as follows:
 
-- **`target`**: CLI の引数や `dep run` で指定可能な実行単位となります。
-- **`option`**: CLI の `key=value` 引数、または `dep use` 時の引数として設定可能です。内部では `$options(-key)` で参照します。
-- **`method`**: オブジェクトのメソッドとして定義され、`target` と同様に外部から名前を指定して呼び出せます。
-- **`proc`**: そのタスクセット内でのみ有効なプライベート関数となります。
-- **`variable`**: タスクセット内で共有される変数です。
+- **`target`**: Becomes a unit of execution that can be specified in CLI arguments or `dep run`.
+- **`option`**: Can be set via CLI `key=value` arguments or during `dep use`. Referenced internally as `$options(-key)`.
+- **`method`**: Defined as an object method and can be called by name from the outside, similar to a `target`.
+- **`proc`**: Becomes a private procedure valid only within that task set.
+- **`variable`**: A shared variable within the task set.

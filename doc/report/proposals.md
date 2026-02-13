@@ -1,52 +1,52 @@
-# TclTaskRunner 機能強化・改良提案書
+# Proposals for TclTaskRunner Enhancements
 
-本ドキュメントでは、TclTaskRunner (ttr) の現状の設計を活かしつつ、さらに実用的で強力なツールへと進化させるための具体的な改良案を提案します。
+This document proposes specific improvements and feature enhancements to evolve TclTaskRunner (ttr) into a more practical and powerful tool, building upon its current design.
 
-## 1. 実行エンジンの強化
+## 1. Execution Engine Enhancements
 
-### 並列実行のサポート
-現在、タスクは深さ優先探索（DFS）により直列に実行されます。Tcl の `Thread` パッケージや、既に実装されている「ワーカーインタープリタ」の仕組みを活用し、依存関係のないタスクの並列実行を可能にします。
-- **期待される効果**: CPUリソースを有効活用し、大規模なビルドやシステム更新の時間を短縮。
+### Parallel Execution Support
+Currently, tasks are executed serially using Depth-First Search (DFS). Leverage Tcl's `Thread` package or the existing "worker interpreter" mechanism to enable parallel execution of tasks that have no dependencies on each other.
+- **Expected Benefit**: Improve resource utilization and reduce execution time for large-scale builds or system updates.
 
-### 実行結果のキャッシング
-`check` スクリプトの実行結果をファイルや共有データベース（SQLite等）にキャッシュする仕組みを導入します。
-- **期待される効果**: ネットワーク経由の確認や重いコマンドを伴う `check` の回数を減らし、全体的なレスポンスを向上させる。
+### Result Caching
+Introduce a mechanism to cache the results of `check` scripts in a file or a shared database (e.g., SQLite).
+- **Expected Benefit**: Improve overall responsiveness by reducing the number of `check` executions that involve heavy commands or network operations.
 
-## 2. DSL と 開発者体験 (DX) の向上
+## 2. DSL and Developer Experience (DX) Improvements
 
-### 未実装機能の補完
-コード内に散見される `error NIMPL` (Not Yet Implemented) 箇所を実装します。
-- **動的なタスク定義**: `method define script` の実装により、タスクセット内からプログラム的に新しいタスクを動的に追加可能にする。
-- **ターゲットの詳細設定**: `target configure` において `depends` 以外の属性（例：タイムアウト、リトライ回数など）を設定可能にする。
+### Complete Unimplemented Features
+Implement features currently marked as `error NIMPL` (Not Yet Implemented) in the codebase.
+- **Dynamic Task Definition**: Implement `method define script` to allow programmatically adding new tasks from within a task set.
+- **Target Configuration**: Allow setting attributes other than `depends` (e.g., timeout, retry count) in `target configure`.
 
-### エラー報告の精密化
-現在、`action` や `check` でエラーが発生した際のスタックトレースは Tcl 全体のものになりますが、これを `.tcltask` ファイル内の行番号と正確に紐付けて表示するように改良します。
-- **期待される効果**: ユーザーがタスク定義のどこで間違えたかを即座に特定できるようにする。
+### Precise Error Reporting
+Currently, stack traces for errors in `action` or `check` scripts are standard Tcl traces. Improve this by mapping errors accurately to line numbers within the `.tcltask` file.
+- **Expected Benefit**: Allow users to immediately identify exactly where they made a mistake in their task definitions.
 
-### シェル補完 (Bash/Zsh)
-タスクセット名やターゲット名を自動補完するためのスクリプトを提供します。
-- **期待される効果**: CLI での操作性を大幅に向上させ、タイポによるミスを減らす。
+### Shell Completion (Bash/Zsh)
+Provide scripts for automatic completion of task set names and target names.
+- **Expected Benefit**: Greatly improve CLI usability and reduce errors caused by typos.
 
-## 3. 可視化とデバッグ機能
+## 3. Visualization and Debugging
 
-### 依存関係グラフの出力
-ロードされたタスクセット間の依存関係を Graphviz (DOT形式) で出力する機能を実装します。
-- **期待される効果**: 複雑なプロジェクトの全体像を視覚的に把握し、デバッグやリファクタリングを容易にする。
+### Dependency Graph Export
+Implement a feature to export dependencies between loaded task sets in Graphviz (DOT) format.
+- **Expected Benefit**: Provide a visual overview of complex projects, making debugging and refactoring easier.
 
-### 構造化ログ出力
-実行ログを JSON 形式などで出力するオプションを追加します。
-- **期待される効果**: CI/CD パイプラインや他の監視ツールとの連携を容易にする。
+### Structured Log Output
+Add an option to output execution logs in a structured format like JSON.
+- **Expected Benefit**: Facilitate integration with CI/CD pipelines and other monitoring tools.
 
-## 4. エコシステムと再利用性の向上
+## 4. Ecosystem and Reusability
 
-### 標準ユーティリティライブラリの整備
-`examples/utils.tcl` や `sed-utils.tcl` のような汎用的な手続きを、`ttr-lib` パッケージとして正式に整備・分離します。
-- **期待される効果**: ユーザーが `.tcltask` を書く際に、OS操作や文字列処理の定型文を自作する手間を省く。
+### Standard Utility Library
+Formalize and separate general-purpose procedures (like those in `examples/utils.tcl` and `sed-utils.tcl`) into an official `ttr-lib` package.
+- **Expected Benefit**: Save users from having to reinvent the wheel for common OS operations and string manipulations.
 
-### モジュール管理システム
-外部のリポジトリから `.tcltask` をダウンロードし、`use` できるような簡易的なプラグイン/モジュール管理機能を検討します。
+### Module Management System
+Consider a simple plugin/module management feature to download and `use` `.tcltask` files from external repositories.
 
-## 5. 内部アーキテクチャの最適化
+## 5. Internal Architecture Optimization
 
-### Snit から TclOO への移行検討 (将来)
-Tcl 8.6 以降では標準で TclOO が利用可能です。Snit は非常に強力ですが、将来的に依存を減らしパフォーマンスを追求する場合、TclOO への移行が選択肢に入ります。
+### Potential Migration from Snit to TclOO
+Standard TclOO is available in Tcl 8.6+. While Snit is very powerful, migrating to TclOO could be an option for reducing dependencies and improving performance in the future.

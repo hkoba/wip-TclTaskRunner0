@@ -1,46 +1,45 @@
-# 内部実装の詳細
+# Implementation Details
 
-このドキュメントでは、TclTaskRunner の内部的な実装テクニックについて解説します。
+This document explains the internal implementation techniques used in TclTaskRunner.
 
-## 動的クラス生成 (Builder)
+## Dynamic Class Generation (Builder)
 
-TclTaskRunner は、静的なパースを行わず、実行時に Tcl 自身の能力を使って DSL を「コンパイル」します。
+TclTaskRunner does not perform static parsing; it "compiles" the DSL at runtime using Tcl's own capabilities.
 
-1.  **隔離**: `interp create` で作成されたクリーンなインタープリタで `.tcltask` を評価します。
-2.  **トラップ**: `interp alias` を使い、DSL コマンド（`target` 等）を `TaskSetBuilder` クラスのメソッドにリダイレクトします。これにより、ユーザーコードが安全に収集されます。
-3.  **テンプレート展開**: 収集した情報を `snit::type` のテンプレートに埋め込み、新しいクラス定義スクリプトを作成します。
-4.  **動的定義**: `uplevel #0` でそのスクリプトを評価し、グローバル名前空間に新しいクラスを定義します。
+1.  **Isolation**: Evaluates the `.tcltask` in a clean interpreter created via `interp create`.
+2.  **Trapping**: Uses `interp alias` to redirect DSL commands (like `target`) to methods of the `TaskSetBuilder` class. This safely collects user definitions.
+3.  **Template Expansion**: Injects the collected information into a `snit::type` template to create a new class definition script.
+4.  **Dynamic Definition**: Evaluates that script using `uplevel #0` to define the new class in the global namespace.
 
-## 実行時コンテキスト (Runtime Context)
+## Runtime Context
 
-生成されたクラスのインスタンスは、`RunContext` によって操作されます。
+The generated class instances are managed by `RunContext`.
 
-### 二重の Snit オブジェクト構造
-- `TaskSetDefinition` インスタンス: メタデータの保持と Builder とのインターフェース。
-- `...::runtime` インスタンス: 実際のユーザー定義コード (`proc`, `variable`) を実行するための隔離環境。
+### Dual Snit Object Structure
+- `TaskSetDefinition` instance: Holds metadata and serves as the interface for the Builder.
+- `...::runtime` instance: An isolated environment for executing actual user-defined code (`proc`, `variable`).
 
-この二重構造により、DSL 内での自由な Tcl コードの記述と、システム側での管理を両立させています。
+This dual structure allows for free-form Tcl code within the DSL while maintaining system-level management.
 
-## 実行環境の同期 (Worker Sync)
+## Worker Interpreter Synchronization (Worker Sync)
 
-ttr は通常、タスクの実行をメインインタープリタから隔離された「ワーカーインタープリタ」で行います（`-isolate yes` の場合）。
+ttr typically executes tasks in a "worker interpreter" isolated from the main interpreter (when `-isolate yes` is set).
 
-### 名前空間の同期
-`import` コマンドで取り込まれた外部の Tcl 名前空間は、`worker sync` 時に自動的にシリアライズされ、ワーカーインタープリタ側で再構築されます（`lib/namespace-util.tcl` の `ns-definition` を使用）。この仕組みにより、外部ユーティリティ (`utils.tcl` など) で定義された `proc` をタスク内で透過的に利用できます。
+### Namespace Synchronization
+External Tcl namespaces brought in via the `import` command are automatically serialized and reconstructed in the worker interpreter during `worker sync` (using `ns-definition` in `lib/namespace-util.tcl`). This allows `proc` defined in external utilities (like `utils.tcl`) to be used transparently within tasks.
 
-### 自動的なエイリアス
-ワーカーインタープリタ内では、`RUN`, `=RUN`, `**`, `IS_DRY_RUN` といったユーティリティコマンドが、メインインタープリタ側の `RunContext` を呼び出すエイリアスとして設定されます。これにより、ワーカー側で実行されるコードからも、ドライランの状態などを正しく参照できます。
+### Automatic Aliases
+Utility commands like `RUN`, `=RUN`, `**`, and `IS_DRY_RUN` are set up as aliases in the worker interpreter that call back to the `RunContext` in the main interpreter. This ensures that code running in the worker correctly reflects the dry-run state.
 
-## 更新判定ロジック (mtime の極限)
+## Update Logic (mtime Extremes)
 
-`RunContext` における更新判定は、以下の数値比較に基づいています。
+Update detection in `RunContext` is based on the following numerical comparisons:
 
-- `mtime(target) < max(mtime(depends))`: 依存先が新しいので再実行。
-- `mtime(target) == -Inf`: ターゲットが未成立なので実行。
+- `mtime(target) < max(mtime(depends))`: Dependency is newer; re-execute.
+- `mtime(target) == -Inf`: Target is unfulfilled; execute.
 
-`check` スクリプトが偽を返した際に `mtime` を `-Inf` (無限の過去) とみなす実装により、複雑な分岐なしに依存関係を解決しています。
+By treating the `mtime` of a target as `-Inf` (infinite past) when its `check` script fails, ttr resolves complex dependencies without branching logic.
 
-## ドライランの仕組み
+## Dry-run Mechanism
 
-`**` コマンドは、`iomacro.tcl` で定義されたマクロによって制御されます。
-ドライランフラグが真の場合、`**` は引数として渡されたコマンドを実行せず、ログに出力するだけのラッパーとして機能します。Tcl の `exec` は引数としてリダイレクトを受け取るため、シェルスクリプトのような文字列置換なしに、リダイレクトを含むコマンドを安全に無効化できる利点があります。
+The `**` command is controlled by macros defined in `iomacro.tcl`. When the dry-run flag is true, `**` acts as a wrapper that logs the command to the output instead of executing it. Since Tcl's `exec` accepts redirections as arguments (evaluated inside `exec`), ttr can safely disable commands containing redirections without brittle string manipulation.

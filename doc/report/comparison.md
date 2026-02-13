@@ -1,51 +1,51 @@
-# タスクランナー比較レポート: TclTaskRunner vs 他のツール
+# Task Runner Comparison Report: TclTaskRunner vs Others
 
-本レポートでは、TclTaskRunner (ttr) と、現在広く普及している他のタスクランナー（Make, Taskfile, Rake, Just 等）を比較し、その設計思想、長所、および短所を分析します。
+This report compares TclTaskRunner (ttr) with other widely used task runners (Make, Taskfile, Rake, Just, etc.) and analyzes its design philosophy, strengths, and weaknesses.
 
-## 比較表
+## Comparison Table
 
-| 特徴 | TclTaskRunner (ttr) | GNU Make | Taskfile (go-task) | Rake / Invoke |
+| Feature | TclTaskRunner (ttr) | GNU Make | Taskfile (go-task) | Rake / Invoke |
 | :--- | :--- | :--- | :--- | :--- |
-| **ベース言語** | Tcl | 独自 / Shell | YAML / Shell | Ruby / Python |
-| **依存関係の基準** | ファイル時刻 & **Checkスクリプト** | ファイル時刻のみ | ファイル時刻 / Check | プログラミング論理 |
-| **Dry-run サポート** | 強力 (言語レベルで統合) | 限定的 (コマンド単位) | なし (Shell依存) | 言語機能に依存 |
-| **拡張性** | 極めて高い (メタプログラミング) | 低い (マクロのみ) | 中 (プラグイン/テンプレート) | 高い (フル言語) |
-| **習得の容易さ** | 中 (Tclの知識が必要) | 低 (独特な構文) | 高 (YAML) | 中 (言語知識が必要) |
+| **Base Language** | Tcl | Custom / Shell | YAML / Shell | Ruby / Python |
+| **Dependency Criteria** | File mtime & **Check Script** | File mtime only | File mtime / Check | Programming Logic |
+| **Dry-run Support** | Strong (Language integrated) | Limited (Per command) | None (Shell dependent) | Depends on language |
+| **Extensibility** | Extremely high (Metaprogramming) | Low (Macros only) | Medium (Plugins/Templates)| High (Full language) |
+| **Ease of Learning** | Medium (Requires Tcl knowledge) | Low (Unique syntax) | High (YAML) | Medium (Requires lang knowledge) |
 
-## TclTaskRunner の長所
+## Strengths of TclTaskRunner
 
-### 1. 「状態」の高度な抽象化
-Make が基本的に「ファイルが存在するか」「ファイルが新しいか」のみを基準にするのに対し、ttr は `check` スクリプトの実行結果を `mtime` として抽象化します。
-- `check` が偽を返せば `-Inf` (無限の過去) とみなされ、依存するファイルが存在していても再実行される。
-- これにより、パッケージのインストール状態、OSの設定値、DBのレコード存在など、**ファイル以外の状態管理**を Makefile 同様の簡潔なロジックで記述できます。
+### 1. Advanced Abstraction of "State"
+While Make primarily relies on "whether a file exists" or "whether a file is new," ttr abstracts the execution result of a `check` script as `mtime`.
+- If `check` returns false, it is treated as `-Inf` (infinite past), causing the task to be re-executed even if dependent files exist.
+- This allows for managing **non-file states** (e.g., package installation status, OS configuration values, existence of DB records) using the same simple logic as a Makefile.
 
-### 2. 言語レベルでの Dry-run (`-n`) 統合
-ttr の最大の強みの一つは、`**` や `RUN` といったマーカー/コマンドを通じた dry-run のサポートです。
-- 通常のツールでは、dry-run モードでも Shell コマンドを文字列として解釈するだけですが、ttr は Tcl の `interp alias` を用いて実行をトラップします。
-- Tcl の `exec` は引数をそのまま受けるため、複雑なクォーティングやリダイレクトを含むコマンドも、安全かつ正確に dry-run モードでシミュレーション可能です。
+### 2. Language-Level Dry-run (`-n`) Integration
+One of ttr's greatest strengths is its built-in dry-run support through markers/commands like `**` and `RUN`.
+- Most tools only interpret shell commands as strings in dry-run mode, but ttr traps execution using Tcl's `interp alias`.
+- Since Tcl's `exec` takes arguments as-is, commands including complex quoting and redirections can be safely and accurately simulated in dry-run mode.
 
-### 3. 強力なメタプログラミングと隔離
-`.tcltask` ファイルは実行時に `snit::type` (クラス) へと変換されます。
-- 各タスクセットが独立したオブジェクトとして扱われ、名前空間が隔離されています。
-- Tcl の `interp` 機能を活用し、ユーザーコードのパースと実行を完全に制御・カスタマイズできます。
+### 3. Powerful Metaprogramming and Isolation
+`.tcltask` files are converted into `snit::type` (classes) at runtime.
+- Each task set is treated as an independent object with an isolated namespace.
+- Leveraging Tcl's `interp` features, it provides full control over the parsing and execution of user code.
 
-## TclTaskRunner の短所
+## Weaknesses of TclTaskRunner
 
-### 1. エコシステムと普及度
-- Tcl は、Python や Go, Node.js などの現代的な言語に比べると、利用可能なライブラリや開発者コミュニティが小さいです。
-- 現代的なビルドツール（npm, Cargo 等）との統合において、専用のプラグインなどが存在しないため、自前で `exec` を呼ぶ必要があります。
+### 1. Ecosystem and Adoption
+- Compared to modern languages like Python, Go, or Node.js, Tcl has a smaller ecosystem of libraries and a smaller developer community.
+- There is no native integration (like plugins) for modern build tools (npm, Cargo, etc.), requiring users to call `exec` manually.
 
-### 2. 構文の親しみやすさ
-- YAML ベースの Taskfile や、馴染みのある Makefile に比べると、Tcl の構文は括弧の使い方などに独特の癖があり、初見のユーザーには敷居が高く感じられる可能性があります。
+### 2. Syntax Familiarity
+- Compared to YAML-based Taskfiles or the familiar Makefile, Tcl's syntax (especially its use of brackets) is unique and may present a steeper learning curve for new users.
 
-## 結論
+## Conclusion
 
-**TclTaskRunner が最適なケース:**
-- OS のシステム管理、コンフィギュレーション管理など、ファイル以外の「状態」を頻繁に扱うタスク。
-- 破壊的な操作を多く含み、実行前に厳格な dry-run での確認が必須となるインフラ構築タスク。
-- 独自の DSL を構築して、複雑なビルドロジックをカプセル化したい大規模なプロジェクト。
+**TclTaskRunner is best for:**
+- OS system administration and configuration management tasks that frequently handle non-file "states."
+- Infrastructure setup tasks that involve many destructive operations and require strict dry-run verification.
+- Large projects where building a custom DSL to encapsulate complex build logic is beneficial.
 
-**他のツールが適しているケース:**
-- 単純なコンパイルとリンクのみを行うプロジェクト (Make)。
-- チーム全員が YAML の読み書きに慣れており、スクリプティングの柔軟性よりも設定の簡潔さを重視する場合 (Taskfile)。
-- 特定の言語（Ruby や Python）のエコシステムに深く依存している場合 (Rake, Invoke)。
+**Other tools are better for:**
+- Simple compilation and linking projects (Make).
+- Projects where the team is comfortable with YAML and prefers configuration simplicity over scripting flexibility (Taskfile).
+- Projects deeply tied to a specific language ecosystem like Ruby or Python (Rake, Invoke).

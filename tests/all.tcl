@@ -6,4 +6,8 @@ cd [file dirname [info script]]
 
 package require tcltest
 namespace import ::tcltest::*
-runAllTests
+
+# tcltest >= 2.5 returns 1 if any test failed; older versions return "".
+if {[set failed [runAllTests]] ne "" && $failed} {
+    exit 1
+}

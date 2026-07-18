@@ -1,0 +1,37 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ubuntu-tcl86:
+    name: Ubuntu (Tcl 8.6)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Tcl and tcllib
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tcl tcllib gcc
+      - name: Show Tcl version
+        run: echo 'puts [info patchlevel]' | tclsh
+      - name: Run tests
+        run: tclsh tests/all.tcl
+        env:
+          LANG: C.UTF-8
+
+  fedora-tcl9:
+    name: Fedora (Tcl 9)
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Tcl and tcllib
+        run: dnf install -y tcl tcllib gcc
+      - name: Show Tcl version
+        run: echo 'puts [info patchlevel]' | tclsh
+      - name: Run tests
+        run: tclsh tests/all.tcl
+        env:
+          LANG: C.UTF-8

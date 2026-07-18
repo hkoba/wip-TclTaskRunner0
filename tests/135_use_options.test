@@ -1,0 +1,84 @@
+#!/usr/bin/env tclsh
+
+package require tcltest
+namespace import tcltest::*
+
+package require fileutil
+package require struct::list
+
+set testScript [file normalize [info script]]
+set testDir    [file rootname $testScript]
+set runnerFn   [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
+set execCmd    [list exec [info nameofexecutable] $runnerFn]
+
+#========================================
+set THEME "use-options"
+
+set ::env(PATH) [file dirname $runnerFn]:$::env(PATH)
+
+test $THEME-prepare-clean "cleanup before run" -body {
+    {*}$execCmd --silent $testDir/main.tcltask clean
+} -returnCodes 0
+
+test $THEME-status-before "each instance is reported as drifted" -body {
+
+    set rc [catch {{*}$execCmd --status $testDir/main.tcltask} out]
+
+    list $rc [lindex $::errorCode 2] \
+        [string match "*✘ @main::a#MAIN*" $out] \
+        [string match "*✘ @main::b#MAIN*" $out]
+
+} -result {1 1 1 1}
+
+test $THEME-run "each instance sees its own options" -body {
+
+    set out [{*}$execCmd $testDir/main.tcltask]
+
+    list $out \
+        [fileutil::cat $testDir/a.out] \
+        [fileutil::cat $testDir/b.out]
+
+} -result [list \
+               "fileutil::writeFile a.out AAA\nfileutil::writeFile b.out BBB" \
+               AAA BBB]
+
+test $THEME-rerun "rerun is idempotent (no action)" -body {
+
+    {*}$execCmd --silent $testDir/main.tcltask
+
+} -result {}
+
+test $THEME-status-after "status shows per-instance effective options" -body {
+
+    {*}$execCmd --status $testDir/main.tcltask
+
+} -result [join {
+    {# @main::a effective options: -msg AAA -out a.out}
+    {# @main::b effective options: -msg BBB -out b.out}
+    {✔ @main::a#MAIN}
+    {✔ @main::b#MAIN}
+    {# 2 ok, 0 needs-action, 0 error}
+} \n]
+
+test $THEME-dup-error "duplicate instance name is rejected" -body {
+
+    set rc [catch {{*}$execCmd --silent $testDir/dup.tcltask} out]
+
+    list $rc [string match "*Duplicate*instance name: @dup::a*" $out]
+
+} -result {1 1}
+
+test $THEME-no-as-error "options without \[as name\] are rejected" -body {
+
+    set rc [catch {{*}$execCmd --silent $testDir/noas.tcltask} out]
+
+    list $rc [string match "*requires*as name*" $out]
+
+} -result {1 1}
+
+test $THEME-clean "No *.out after clean" -body {
+    {*}$execCmd --silent $testDir/main.tcltask clean
+    glob -nocomplain $testDir/*.out
+} -result {}
+
+cleanupTests

@@ -33,6 +33,37 @@ Calling this file:
 - `ttr main.tcltask name=bar`: Executes the `all` target with `-name bar`.
 - `ttr main.tcltask clean`: Executes the `clean` method.
 
+### Status Report (`--status`)
+
+With `--status`, ttr evaluates only the `check` scripts of the given target
+(default target if omitted) and its dependencies — no action is ever run —
+and prints how each target's state stands. Use it for configuration drift
+detection.
+
+```console
+$ ttr --status main.tcltask
+# @main effective options: -flavor plain
+✔ @main#ok-leaf note fine
+✘ @main#ng-leaf got missing
+# 1 ok, 1 needs-action, 0 error
+```
+
+- `✔` = check satisfied; `✘` = unsatisfied (action needed); `!!` = the check
+  raised an error, or a dependency file is missing; `⊘` = undecidable
+  because a dependency errored
+- The key-value diagnostic list returned by each `check` is shown as-is
+- The leading `# ... effective options:` lines show the option values
+  actually applied to each task set
+- The exit code follows diff conventions: 0 = all satisfied, 1 = drift
+  found, 2 = error found
+- Pure aggregate targets (no `check`, no `action`) are omitted
+- While `-n` (dry-run) shows *the commands that would run*, `--status`
+  shows *the current check result of each target*
+
+Running it periodically from cron and watching the exit code gives you a
+simple drift monitor. Note the convention that `check` scripts must be free
+of side effects (`--status` relies on this to run them).
+
 ## Usage as a Library
 
 To control ttr from your own Tcl script:

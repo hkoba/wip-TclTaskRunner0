@@ -106,12 +106,38 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
             '$name' should be either @xxx or xxx.tcltask"
         }
         set extName @$rootName
+        set asSpec [if {$asName ne ""} {$myRegistry parse-use-spec $asName}]
+
+        if {$args ne ""} {
+            # Remaining args are runtime options, which create a distinct,
+            # parameterized instance of the sub-taskset.
+            if {$asSpec eq ""} {
+                error "\[use $name -option value...\] requires \[as name\]"
+            }
+            if {[llength $args] % 2} {
+                error "Odd number of option arguments\
+                   in \[use $name as $asName\]: $args"
+            }
+            foreach {opt value} $args {
+                if {![string match -* $opt]} {
+                    error "Invalid option '$opt' in \[use $name as $asName\]"
+                }
+            }
+            set instName [$def cget -name]::[string range $asSpec 1 end]
+            set subdef [$self taskset ensure-loaded \
+                            [$self filename-from-extern $rootName $def] \
+                            $args \
+                            [+ 1 [$def cget -depth]] \
+                            $instName]
+            $def extern add $asSpec $subdef
+            return $asSpec
+        }
+
         set subdef [$self taskset ensure-loaded \
                         [$self filename-from-extern $rootName $def] \
                         {} \
                         [+ 1 [$def cget -depth]]]
-        $def extern add $extName $subdef \
-            [if {$asName ne ""} {$myRegistry parse-use-spec $asName}]
+        $def extern add $extName $subdef $asSpec
 
         set extName
     }
@@ -333,11 +359,19 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     #========================================
 
-    method {taskset ensure-loaded} {fn optsList {depth 0}} {
-        set name [$myRegistry relative-name $fn]
+    method {taskset ensure-loaded} {fn optsList {depth 0} {instName ""}} {
+        set name [if {$instName ne ""} {
+            if {[$myRegistry exists $instName]} {
+                error "Duplicate \[use ... as\] instance name: $instName"
+            }
+            set instName
+        } else {
+            $myRegistry relative-name $fn
+        }]
         if {![$myRegistry exists $name]} {
             set rc [catch {
-                $self taskset define file $fn $optsList -depth $depth
+                $self taskset define file $fn $optsList -depth $depth \
+                    -as-name $instName
             } error]
             if {$rc} {
                 set diag "Can't load tcltask $fn: $error"
@@ -360,10 +394,15 @@ snit::type ::TclTaskRunner::TaskSetBuilder {
 
     method {taskset prepare file} {origFn optList args} {
         set depth [from args -depth 0]
+        set asName [from args -as-name ""]
 
         set fn [fileutil::lexnormalize [file normalize $origFn]]
 
-        set name [$myRegistry relative-name $fn]
+        set name [if {$asName ne ""} {
+            set asName
+        } else {
+            $myRegistry relative-name $fn
+        }]
         if {[$myRegistry exists $name]} {
             error "Conflicting name?? $name"
         }

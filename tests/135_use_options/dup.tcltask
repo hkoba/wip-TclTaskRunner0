@@ -1,0 +1,7 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+use greet.tcltask as @a -msg X -out x.out
+use greet.tcltask as @a -msg Y -out y.out
+
+default target all dependsTasks {@a}

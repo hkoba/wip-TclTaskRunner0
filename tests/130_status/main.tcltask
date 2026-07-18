@@ -1,0 +1,50 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+option -flavor plain
+
+default target all dependsTasks {ok-leaf ng-leaf}
+
+target ok-leaf check {
+    list yes note fine
+} action {
+    ** exec touch bad1.out
+}
+
+target ng-leaf check {
+    list no got missing
+} action {
+    ** exec touch bad2.out
+}
+
+target witherr dependsTasks {err-leaf}
+
+target err-leaf check {
+    error boom
+} action {
+    ** exec touch bad3.out
+}
+
+target allok dependsTasks {ok-leaf}
+
+# A chain where every check is unsatisfied; the parent must be reported
+# as needs-action even though no dependency looks "changed" (mtime-wise).
+target chain dependsTasks {chain-parent sat-parent}
+
+target chain-parent dependsTasks {chain-child} check {
+    list no reason parent-unsatisfied
+} action {
+    ** exec touch bad4.out
+}
+
+target sat-parent dependsTasks {chain-child} check {
+    list yes
+} action {
+    ** exec touch bad5.out
+}
+
+target chain-child check {
+    list no reason child-unsatisfied
+} action {
+    ** exec touch bad6.out
+}

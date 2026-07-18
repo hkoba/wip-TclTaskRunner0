@@ -33,6 +33,34 @@ target all { ... }
 - `ttr main.tcltask name=bar`: `all` ターゲットを `-name bar` で実行。
 - `ttr main.tcltask clean`: `clean` メソッドを実行。
 
+### 状態レポート (`--status`)
+
+`--status` を付けると、action を一切実行せずに、指定ターゲット(省略時は
+default target)とその依存関係の `check` だけを評価し、成立状況を一覧表示します。
+構成ドリフトの検知に使えます。
+
+```console
+$ ttr --status main.tcltask
+# @main effective options: -flavor plain
+✔ @main#ok-leaf note fine
+✘ @main#ng-leaf got missing
+# 1 ok, 1 needs-action, 0 error
+```
+
+- `✔` = check 成立、`✘` = 未成立(action が必要)、`!!` = check の実行エラー
+  または依存ファイルの欠落、`⊘` = 依存先のエラーにより判定不能
+- `check` が返した key-value 形式の診断情報が各行にそのまま表示されます
+- 冒頭の `# ... effective options:` 行で、各タスクセットに実際に適用された
+  オプション値を確認できます
+- exit code は diff 流です: 0 = すべて成立、1 = 未成立あり、2 = エラーあり
+- `check` も `action` も持たない集約ターゲットは表示されません
+- `-n` (dry-run) が「実行されるはずのコマンド列」を見せるのに対し、
+  `--status` は「各ターゲットの現在の検査結果」を見せます
+
+cron などで定期実行して exit code を監視すれば、簡易的なドリフト監視になります。
+なお `check` スクリプトは副作用を持たないように書くのが規約です
+(`--status` はそれを前提に check を実行します)。
+
 ## ライブラリとしての利用
 
 自作の Tcl スクリプト内から ttr を制御する手順は以下の通りです。

@@ -6,11 +6,14 @@ snit::type ::TclTaskRunner::RunContext {
     variable myVisited -array []
     variable myMtime   -array []
     variable myState   -array []
-    
+    variable myErrored -array []
+    variable myReport  []
+
     option -registry
     option -toplevel
 
     option -dry-run no
+    option -check-only no
     
     ::TclTaskRunner::use_logging
 
@@ -109,17 +112,45 @@ snit::type ::TclTaskRunner::RunContext {
         }
 
         set myVisited($targetTuple) 2
-        
-        if {[llength $changed]} {
+
+        set erroredPreds []
+        foreach pred $depends {
+            if {[info exists myErrored($pred)]} {
+                lappend erroredPreds $pred
+            }
+        }
+
+        if {[info exists myErrored($targetTuple)]} {
+            $self dputs $depth error-detected-for $targetTuple \
+                $myErrored($targetTuple)
+            $self report add $targetTuple error $myErrored($targetTuple)
+        } elseif {[llength $erroredPreds]} {
+            $self dputs $depth blocked-by $erroredPreds
+            $self report add $targetTuple blocked [list blocked-by $erroredPreds]
+        } elseif {[llength $changed]} {
             $self dputs $depth because-of changed $changed
-            $self target try action $targetTuple $depth
+            if {$options(-check-only)} {
+                $self report add $targetTuple needs-action [list changed $changed]
+            } else {
+                $self target try action $targetTuple $depth
+            }
         } elseif {($depends eq "" && $thisMtime == -Inf)} {
             $self dputs $depth because-of thisMtime $thisMtime
-            $self target try action $targetTuple $depth
+            if {$options(-check-only)} {
+                $self report add $targetTuple needs-action []
+            } else {
+                $self target try action $targetTuple $depth
+            }
+        } elseif {$options(-check-only) && $thisMtime == -Inf} {
+            # In a real run, updating the (currently -Inf) preds would make
+            # them newer than this target, so its action would run too.
+            $self dputs $depth check-only: unsatisfied though deps unchanged
+            $self report add $targetTuple needs-action []
         } else {
             $self dputs $depth No need to update $target
+            $self report add $targetTuple ok []
         }
-        
+
     }
     
     method {fake mtime} targetTuple {
@@ -146,6 +177,12 @@ snit::type ::TclTaskRunner::RunContext {
             if {[$self file exists $target]} {
                 $self file mtime $target
             } elseif {[$scope file exists $target]} {
+                return -Inf
+            } elseif {$options(-check-only)} {
+                if {![info exists myErrored($targetTuple)]} {
+                    set myErrored($targetTuple) [list missing-file $target]
+                    $self report add $targetTuple error $myErrored($targetTuple)
+                }
                 return -Inf
             } else {
                 error "Dependency target file not found: $target"
@@ -195,6 +232,12 @@ snit::type ::TclTaskRunner::RunContext {
         } resList optDict]
 
         if {$rc == 1} {
+            if {$options(-check-only)} {
+                set myErrored($targetTuple) [list check-error $resList]
+                $self dputs $depth check-only: check script error \
+                    for $targetTuple: $resList
+                return
+            }
             dict set optDict -errorcode [list TCLTASK_ERROR check \
                                             [dict get $optDict -errorcode]]
             return -code TCL_ERROR  \
@@ -280,6 +323,77 @@ snit::type ::TclTaskRunner::RunContext {
         }
     }
     
+    method {report add} {targetTuple status detail} {
+        set vn myState($targetTuple,check)
+        lappend myReport [dict create tuple $targetTuple \
+                              status $status detail $detail \
+                              check [default $vn ""]]
+    }
+
+    method {report list} {} {set myReport}
+
+    # Renders the report collected during a -check-only traversal.
+    # Returns a status: 0 (all satisfied), 1 (drift found), 2 (error found)
+    method {report render} {{fh stdout}} {
+        set counts [dict create ok 0 needs-action 0 error 0 blocked 0 \
+                        aggregate 0]
+        foreach row $myReport {
+            lassign [dict get $row tuple] scope kind target
+            set status [dict get $row status]
+            set diag [lassign [dict get $row check] isOk]
+            set label "[$scope cget -name]#$target"
+            if {$status ne "error" && $kind eq "task"
+                && [dict-default [set targetDict [$scope target get $target]] \
+                        check] eq ""
+                && [dict-default $targetDict action] eq ""} {
+                # A pure aggregate target; its state is just that of its deps.
+                dict incr counts aggregate
+                continue
+            }
+            switch $status {
+                ok {
+                    puts $fh [string trimright "✔ $label $diag"]
+                }
+                needs-action {
+                    set becauseOf []
+                    foreach t [dict-default [dict get $row detail] changed] {
+                        lappend becauseOf [lindex $t 2]
+                    }
+                    set line [string trimright "✘ $label $diag"]
+                    if {$becauseOf ne ""} {
+                        append line " (depends changed: $becauseOf)"
+                    }
+                    puts $fh $line
+                }
+                error {
+                    puts $fh [string trimright "!! $label [dict get $row detail]"]
+                }
+                blocked {
+                    set names []
+                    foreach t [dict-default [dict get $row detail] blocked-by] {
+                        lappend names [lindex $t 2]
+                    }
+                    puts $fh "⊘ $label (blocked by: $names)"
+                }
+            }
+            dict incr counts $status
+        }
+        set summary "# [dict get $counts ok] ok,\
+                 [dict get $counts needs-action] needs-action,\
+                 [dict get $counts error] error"
+        if {[dict get $counts blocked]} {
+            append summary ", [dict get $counts blocked] blocked"
+        }
+        puts $fh $summary
+        if {[dict get $counts error]} {
+            return 2
+        } elseif {[dict get $counts needs-action]} {
+            return 1
+        } else {
+            return 0
+        }
+    }
+
     method {target diag} {target diag result} {
         return -code error \
             -errorcode [list failed-target $target result $result] \

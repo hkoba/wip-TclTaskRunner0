@@ -32,6 +32,7 @@ snit::type TclTaskRunner {
 
     option -dump no
     option -show-dependency no
+    option -status no
 
     typevariable ourTaskSetType TaskSetDefinition
 
@@ -135,6 +136,33 @@ snit::type TclTaskRunner {
             -debug $options(-debug) \
             -registry $myTaskSetRegistry -toplevel $self
     }
+
+    # Runs check scripts only (no action) for $target and its dependencies,
+    # prints the drift report and returns 0 (satisfied), 1 (drift), 2 (error).
+    method status {def {target ""}} {
+        if {$target eq ""} {
+            set target [$def cget -default]
+        }
+        if {![$def target exists $target]} {
+            error "No such target in [$def cget -file]: $target"
+        }
+
+        foreach {name subdef} [$myTaskSetRegistry all] {
+            if {[set optNames [$subdef runtime invoke info options]] eq ""} \
+                continue
+            set kv []
+            foreach o $optNames {
+                lappend kv $o [$subdef runtime invoke cget $o]
+            }
+            puts "# $name effective options: $kv"
+        }
+
+        set runner [$self runner -check-only yes]
+        scope_guard runner [list $runner destroy]
+        $runner run $def $target
+
+        $runner report render
+    }
 }
 
 source $::TclTaskRunner::libDir/builder.tcl
@@ -225,6 +253,18 @@ snit::typemethod TclTaskRunner toplevel args {
             error "No such target in $taskFile: $target"
         }
         puts "target $target depends: [$def target depends $target]"
+        return
+    }
+
+    if {[$self cget -status]} {
+        set target [if {$args ne ""} {
+            lindex $args 0
+        } else {
+            $def cget -default
+        }]
+        if {[set failed [$self status $def $target]]} {
+            exit $failed
+        }
         return
     }
 

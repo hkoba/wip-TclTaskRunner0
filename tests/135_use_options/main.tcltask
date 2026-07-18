@@ -1,0 +1,13 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+use greet.tcltask as @a -msg AAA -out a.out
+use greet.tcltask as @b -msg BBB -out b.out
+
+default target all dependsTasks {@a @b}
+
+method clean {} {
+    if {[set files [glob -nocomplain *.out]] ne ""} {
+        ** file delete {*}$files
+    }
+}

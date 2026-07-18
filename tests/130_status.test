@@ -1,0 +1,68 @@
+#!/usr/bin/env tclsh
+
+package require tcltest
+namespace import tcltest::*
+
+package require fileutil
+package require struct::list
+
+set testScript [file normalize [info script]]
+set testDir    [file rootname $testScript]
+set runnerFn   [file dirname [file dirname $testScript]]/TclTaskRunner.tcl
+set execCmd    [list exec [info nameofexecutable] $runnerFn]
+
+#========================================
+set THEME "status"
+
+set ::env(PATH) [file dirname $runnerFn]:$::env(PATH)
+
+test $THEME-satisfied "--status exits 0 when every check is satisfied" -body {
+
+    {*}$execCmd --status $testDir/main.tcltask allok
+
+} -result [join {
+    {# @main effective options: -flavor plain}
+    {✔ @main#ok-leaf note fine}
+    {# 1 ok, 0 needs-action, 0 error}
+} \n]
+
+test $THEME-drift "--status reports drift with exit code 1" -body {
+
+    set rc [catch {{*}$execCmd --status $testDir/main.tcltask} out]
+
+    list $rc [lindex $::errorCode 0] [lindex $::errorCode 2] \
+        [string match "*✔ @main#ok-leaf note fine*" $out] \
+        [string match "*✘ @main#ng-leaf got missing*" $out] \
+        [string match "*1 ok, 1 needs-action, 0 error*" $out]
+
+} -result {1 CHILDSTATUS 1 1 1 1}
+
+test $THEME-error "--status reports check errors with exit code 2" -body {
+
+    set rc [catch {{*}$execCmd --status $testDir/main.tcltask witherr} out]
+
+    list $rc [lindex $::errorCode 0] [lindex $::errorCode 2] \
+        [string match "*!! @main#err-leaf check-error boom*" $out] \
+        [string match "*0 ok, 0 needs-action, 1 error*" $out]
+
+} -result {1 CHILDSTATUS 2 1 1}
+
+test $THEME-chain "unsatisfied chain is fully reported as needs-action" -body {
+
+    set rc [catch {{*}$execCmd --status $testDir/main.tcltask chain} out]
+
+    list $rc [lindex $::errorCode 2] \
+        [string match "*✘ @main#chain-child reason child-unsatisfied*" $out] \
+        [string match "*✘ @main#chain-parent reason parent-unsatisfied*" $out] \
+        [string match "*✘ @main#sat-parent (depends changed: chain-child)*" $out] \
+        [string match "*0 ok, 3 needs-action, 0 error*" $out]
+
+} -result {1 1 1 1 1 1}
+
+test $THEME-no-side-effect "--status never runs actions" -body {
+
+    glob -nocomplain $testDir/*.out
+
+} -result {}
+
+cleanupTests

@@ -1,0 +1,14 @@
+#!/usr/bin/env TclTaskRunner.tcl
+# -*- mode: tcl; tab-width: 4; coding: utf-8 -*-
+
+package require fileutil
+
+option -msg hello
+option -out greet.out
+
+default target MAIN check {
+    list [expr {[file exists $options(-out)]
+                && [::fileutil::cat $options(-out)] eq $options(-msg)}]
+} action {
+    ** fileutil::writeFile $options(-out) $options(-msg)
+}
